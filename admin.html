@@ -6,173 +6,198 @@
 <title>88CAMPCAR — 予約管理</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, 'Helvetica Neue', 'Noto Sans JP', sans-serif;
-    background: #f5f5f5; color: #111; line-height: 1.5;
-  }
+  body { font-family: -apple-system, 'Helvetica Neue', 'Noto Sans JP', sans-serif; background: #f5f5f5; color: #111; line-height: 1.5; }
 
   /* ── Header ── */
-  .header {
-    background: #111; color: #fff; padding: 14px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-  }
+  .header { background: #111; color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .header h1 { font-size: 15px; font-weight: 900; letter-spacing: .06em; }
   .header h1 span { color: #f97316; }
   .header-right { display: flex; align-items: center; gap: 10px; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 9px; border-radius: 100px; font-size: 10px; font-weight: 700;
-  }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; }
   .badge-pending { background: #fef3c7; color: #92400e; }
   .badge-confirmed { background: #d1fae5; color: #065f46; }
   .badge-cancelled { background: #fee2e2; color: #991b1b; }
-  .btn-logout {
-    background: transparent; border: 1px solid rgba(255,255,255,.2);
-    color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 10px;
-    font-weight: 700; cursor: pointer; transition: all .15s;
-  }
+  .btn-logout { background: transparent; border: 1px solid rgba(255,255,255,.2); color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; transition: all .15s; }
   .btn-logout:hover { background: #f97316; border-color: #f97316; }
 
   /* ── Login ── */
-  .login-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: #111; display: flex; align-items: center; justify-content: center;
-  }
-  .login-box {
-    background: #fff; padding: 40px; border-radius: 12px;
-    width: 100%; max-width: 360px; text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,.3);
-  }
+  .login-overlay { position: fixed; inset: 0; z-index: 200; background: #111; display: flex; align-items: center; justify-content: center; }
+  .login-box { background: #fff; padding: 40px; border-radius: 12px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
   .login-box h2 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
   .login-box p { font-size: 12px; color: #888; margin-bottom: 24px; }
-  .login-box input {
-    width: 100%; padding: 12px 16px; border: 2px solid #ddd; border-radius: 8px;
-    font-size: 14px; font-weight: 600; text-align: center; outline: none;
-    transition: border-color .15s;
-  }
+  .login-box input { width: 100%; padding: 12px 16px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; outline: none; transition: border-color .15s; }
   .login-box input:focus { border-color: #f97316; }
-  .login-box button {
-    width: 100%; padding: 14px; margin-top: 12px; background: #111; color: #fff;
-    border: none; border-radius: 8px; font-size: 13px; font-weight: 800;
-    cursor: pointer; letter-spacing: .05em; transition: background .15s;
-  }
+  .login-box button { width: 100%; padding: 14px; margin-top: 12px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; letter-spacing: .05em; transition: background .15s; }
   .login-box button:hover { background: #f97316; }
   .login-err { color: #ef4444; font-size: 12px; font-weight: 700; margin-top: 10px; }
   .login-diag { color: #666; font-size: 11px; margin-top: 8px; line-height: 1.4; word-break: break-all; }
   .login-overlay.hidden { display: none; }
 
   /* ── Stats Bar ── */
-  .stats-bar {
-    display: flex; gap: 16px; padding: 14px 24px; flex-wrap: wrap;
-    border-bottom: 1px solid #e5e5e5; background: #fff;
-  }
-  .stat-item {
-    display: flex; align-items: baseline; gap: 5px;
-    font-size: 11px; font-weight: 700; color: #888;
-  }
+  .stats-bar { display: flex; gap: 16px; padding: 14px 24px; flex-wrap: wrap; border-bottom: 1px solid #e5e5e5; background: #fff; }
+  .stat-item { display: flex; align-items: baseline; gap: 5px; font-size: 11px; font-weight: 700; color: #888; }
   .stat-item strong { font-size: 20px; color: #111; }
 
+  /* ── Alert Strip ── */
+  .alert-strip { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 10px 24px; display: none; flex-wrap: wrap; gap: 8px; }
+  .alert-strip.visible { display: flex; }
+  .alert-item { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .alert-checkin  { background: #d1fae5; color: #065f46; }
+  .alert-checkout { background: #e0f2fe; color: #0369a1; }
+  .alert-urgent   { background: #fef3c7; color: #92400e; }
+  .alert-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
   /* ── Toolbar ── */
-  .toolbar {
-    display: flex; gap: 8px; padding: 14px 24px; flex-wrap: wrap; align-items: center;
-  }
-  .filter-btn {
-    padding: 5px 14px; border: 1.5px solid #ddd; border-radius: 100px;
-    font-size: 11px; font-weight: 700; cursor: pointer; background: #fff;
-    transition: all .15s; color: #555;
-  }
+  .toolbar { display: flex; gap: 8px; padding: 14px 24px; flex-wrap: wrap; align-items: center; }
+  .view-toggle { display: flex; background: #f0f0f0; border-radius: 8px; padding: 2px; gap: 2px; }
+  .view-btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; border: none; background: transparent; color: #666; transition: all .15s; }
+  .view-btn.active { background: #111; color: #fff; }
+  .filter-btn { padding: 5px 14px; border: 1.5px solid #ddd; border-radius: 100px; font-size: 11px; font-weight: 700; cursor: pointer; background: #fff; transition: all .15s; color: #555; }
   .filter-btn:hover { border-color: #111; color: #111; }
   .filter-btn.active { background: #111; color: #fff; border-color: #111; }
-  .search-input {
-    margin-left: auto; padding: 7px 14px; border: 1.5px solid #ddd;
-    border-radius: 8px; font-size: 12px; width: 220px; outline: none;
-    transition: border-color .15s;
-  }
+  .search-input { margin-left: auto; padding: 7px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 12px; width: 220px; outline: none; transition: border-color .15s; }
   .search-input:focus { border-color: #f97316; }
+
+  /* ── Calendar ── */
+  .cal-wrap { padding: 0 24px 16px; display: none; }
+  .cal-wrap.visible { display: block; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; margin-bottom: 8px; }
+  .cal-nav-btn { background: #fff; border: 1.5px solid #ddd; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; }
+  .cal-nav-btn:hover { border-color: #111; }
+  .cal-month-label { font-size: 16px; font-weight: 900; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; background: #e5e5e5; border: 1px solid #e5e5e5; border-radius: 10px; overflow: hidden; }
+  .cal-dow { text-align: center; font-size: 10px; font-weight: 700; color: #999; padding: 8px 4px; background: #fff; }
+  .cal-dow:first-child { color: #ef4444; }
+  .cal-dow:last-child  { color: #3b82f6; }
+  .cal-cell { background: #fff; min-height: 64px; padding: 6px; cursor: pointer; transition: background .1s; position: relative; display: flex; flex-direction: column; gap: 3px; }
+  .cal-cell:hover { background: #f9fafb; }
+  .cal-cell.today { background: #fff7ed; }
+  .cal-cell.today .cal-day-num { color: #f97316; font-weight: 900; }
+  .cal-cell.past { opacity: .4; }
+  .cal-cell.selected { background: #111 !important; }
+  .cal-cell.selected .cal-day-num { color: #fff; }
+  .cal-cell.empty { background: #fafafa; cursor: default; }
+  .cal-day-num { font-size: 12px; font-weight: 700; color: #333; line-height: 1; }
+  .cal-badge { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border-radius: 4px; padding: 1px 5px; line-height: 1.4; }
+  .cal-badge.confirmed { background: #d1fae5; color: #065f46; }
+  .cal-badge.pending   { background: #fef3c7; color: #92400e; }
+  .cal-date-filter-bar { display: none; align-items: center; gap: 8px; padding: 8px 24px; background: #fff7ed; border-bottom: 1px solid #fed7aa; font-size: 12px; font-weight: 700; color: #92400e; }
+  .cal-date-filter-bar.visible { display: flex; }
+  .cal-clear-btn { margin-left: auto; padding: 3px 10px; border-radius: 4px; border: 1px solid #f97316; background: transparent; color: #f97316; font-size: 11px; font-weight: 700; cursor: pointer; }
 
   /* ── Card List ── */
   .card-list { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 8px; }
-  .card {
-    background: #fff; border: 1px solid #e5e5e5; border-radius: 10px;
-    overflow: hidden; transition: box-shadow .15s;
-  }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; overflow: hidden; transition: box-shadow .15s; }
+  .card.urgent { border-left: 3px solid #f59e0b; }
   .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.05); }
-  .card-header {
-    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
-    cursor: pointer; user-select: none;
-  }
+  .card-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
   .card-header:hover { background: #fafafa; }
-  .card-name { font-weight: 800; font-size: 14px; flex: 1; }
+  .card-name  { font-weight: 800; font-size: 14px; flex: 1; }
   .card-dates { font-size: 12px; color: #666; font-weight: 600; white-space: nowrap; }
-  .card-plan {
-    font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 100px;
-    text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
-  }
-  .plan-short { background: #f3f4f6; color: #555; }
+  .card-plan  { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 100px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  .plan-short  { background: #f3f4f6; color: #555; }
   .plan-medium { background: #dbeafe; color: #1d4ed8; }
   .plan-weekly { background: #ffedd5; color: #c2410c; }
-  .card-chevron {
-    width: 18px; height: 18px; transition: transform .2s;
-    color: #ccc; flex-shrink: 0;
-  }
+  .card-chevron { width: 18px; height: 18px; transition: transform .2s; color: #ccc; flex-shrink: 0; }
   .card-chevron.open { transform: rotate(180deg); }
 
   /* ── Card Detail ── */
   .card-body { display: none; padding: 0 16px 16px; }
   .card-body.open { display: block; }
-  .detail-grid {
-    display: grid; grid-template-columns: 90px 1fr;
-    gap: 3px 12px; font-size: 13px; margin-bottom: 12px;
-  }
+  .detail-grid { display: grid; grid-template-columns: 90px 1fr; gap: 3px 12px; font-size: 13px; margin-bottom: 12px; }
   .detail-label { color: #999; font-weight: 600; padding: 4px 0; }
   .detail-value { font-weight: 600; word-break: break-all; padding: 4px 0; }
   .detail-value a { color: #f97316; text-decoration: none; }
   .detail-value a:hover { text-decoration: underline; }
-
   .license-thumbs { display: flex; gap: 10px; margin-bottom: 12px; }
-  .license-thumb {
-    width: 110px; height: 70px; border-radius: 6px; border: 1px solid #e5e5e5;
-    object-fit: cover; cursor: pointer; transition: transform .15s;
-  }
+  .license-thumb { width: 110px; height: 70px; border-radius: 6px; border: 1px solid #e5e5e5; object-fit: cover; cursor: pointer; transition: transform .15s; }
   .license-thumb:hover { transform: scale(1.05); }
-
   .action-bar { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid #f0f0f0; flex-wrap: wrap; }
-  .action-btn {
-    padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 700;
-    cursor: pointer; border: 1.5px solid transparent; transition: all .15s;
-  }
+  .action-btn { padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid transparent; transition: all .15s; }
   .btn-confirm { background: #065f46; color: #fff; }
   .btn-confirm:hover { background: #047857; }
-  .btn-cancel { background: #fff; border-color: #ef4444; color: #ef4444; }
-  .btn-cancel:hover { background: #fef2f2; }
+  .btn-cancel  { background: #fff; border-color: #ef4444; color: #ef4444; }
+  .btn-cancel:hover  { background: #fef2f2; }
   .btn-pending { background: #fff; border-color: #f59e0b; color: #92400e; }
   .btn-pending:hover { background: #fffbeb; }
-  .btn-delete { background: #fff; border-color: #ddd; color: #999; margin-left: auto; }
-  .btn-delete:hover { background: #fee2e2; border-color: #ef4444; color: #ef4444; }
+  .btn-delete  { background: #fff; border-color: #ddd; color: #999; margin-left: auto; }
+  .btn-delete:hover  { background: #fee2e2; border-color: #ef4444; color: #ef4444; }
+  .empty-state { text-align: center; padding: 60px 24px; color: #bbb; font-size: 14px; font-weight: 600; }
 
-  .empty-state {
-    text-align: center; padding: 60px 24px; color: #bbb;
-    font-size: 14px; font-weight: 600;
-  }
+  /* ── Cancel Modal ── */
+  .modal-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.25); overflow: hidden; }
+  .modal-header { padding: 20px 20px 0; }
+  .modal-title  { font-size: 16px; font-weight: 900; }
+  .modal-body   { padding: 16px 20px; }
+  .modal-name   { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .modal-dates  { font-size: 12px; color: #666; font-weight: 600; margin-bottom: 14px; }
+  .fee-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; }
+  .fee-row.free    { background: #d1fae5; }
+  .fee-row.partial { background: #fef3c7; }
+  .fee-row.full    { background: #fee2e2; }
+  .fee-row.neutral { background: #f3f4f6; }
+  .fee-label { font-size: 12px; font-weight: 700; }
+  .fee-value { font-size: 14px; font-weight: 900; }
+  .fee-note  { font-size: 11px; color: #888; font-weight: 600; margin-top: 10px; line-height: 1.5; }
+  .modal-footer { padding: 0 20px 20px; display: flex; gap: 8px; }
+  .modal-btn { flex: 1; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; border: none; transition: all .15s; }
+  .modal-btn-back { background: #f3f4f6; color: #555; }
+  .modal-btn-back:hover { background: #e5e7eb; }
+  .modal-btn-exec { background: #ef4444; color: #fff; }
+  .modal-btn-exec:hover { background: #dc2626; }
 
   /* ── Lightbox ── */
-  .lightbox {
-    position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.85);
-    display: none; align-items: center; justify-content: center; cursor: pointer;
-  }
+  .lightbox { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; cursor: pointer; }
   .lightbox.show { display: flex; }
   .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
 
   /* ── Toast ── */
-  .toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 400; display: flex; flex-direction: column; gap: 6px; }
-  .toast {
-    background: #111; color: #fff; padding: 10px 18px; border-radius: 8px;
-    font-size: 12px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.2);
-    animation: toastIn .3s ease;
-  }
+  .toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: flex; flex-direction: column; gap: 6px; }
+  .toast { background: #111; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.2); animation: toastIn .3s ease; }
   .toast.error { background: #ef4444; }
   @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── CSV Button ── */
+  .csv-btn { padding: 7px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; background: #fff; color: #555; transition: all .15s; }
+  .csv-btn:hover { border-color: #111; color: #111; }
+
+  /* ── Blocks Section ── */
+  .blocks-section { margin-top: 16px; background: #fff; border-radius: 10px; border: 1px solid #e5e5e5; overflow: hidden; }
+  .blocks-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+  .blocks-title { font-size: 12px; font-weight: 800; color: #555; }
+  .btn-add-block { padding: 5px 12px; background: #111; color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .15s; }
+  .btn-add-block:hover { background: #f97316; }
+  .block-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid #f5f5f5; font-size: 12px; }
+  .block-item:last-child { border-bottom: none; }
+  .block-dates { font-weight: 700; flex: 1; }
+  .block-reason { color: #888; font-size: 11px; }
+  .btn-del-block { padding: 3px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 10px; color: #999; background: #fff; cursor: pointer; }
+  .btn-del-block:hover { border-color: #ef4444; color: #ef4444; }
+  .blocks-empty { padding: 12px 16px; font-size: 12px; color: #bbb; font-weight: 600; }
+
+  /* ── Note Field ── */
+  .note-area { width: 100%; padding: 8px 10px; border: 1.5px solid #e5e5e5; border-radius: 8px; font-size: 12px; font-family: inherit; resize: vertical; min-height: 60px; outline: none; transition: border-color .15s; }
+  .note-area:focus { border-color: #f97316; }
+  .btn-save-note { padding: 5px 12px; background: #111; color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background .15s; }
+  .btn-save-note:hover { background: #f97316; }
+
+  /* ── Refund Toggle ── */
+  .refund-toggle { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; cursor: pointer; margin-top: 8px; font-size: 12px; font-weight: 700; color: #065f46; }
+  .refund-toggle input[type="checkbox"] { width: 15px; height: 15px; accent-color: #059669; cursor: pointer; flex-shrink: 0; }
+
+  /* ── Modify Modal ── */
+  .modify-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .modify-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .modify-label { font-size: 11px; font-weight: 700; color: #888; }
+  .modify-input { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 600; outline: none; transition: border-color .15s; width: 100%; }
+  .modify-input:focus { border-color: #f97316; }
+  .modify-diff { padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; margin-top: 4px; display: none; }
+  .modify-diff.visible { display: block; }
+  .modify-diff.refund { background: #d1fae5; color: #065f46; }
+  .modify-diff.charge { background: #fef3c7; color: #92400e; }
+  .modify-diff.even   { background: #f3f4f6; color: #555; }
 
   /* ── Mobile ── */
   @media (max-width: 640px) {
@@ -181,11 +206,13 @@
     .toolbar { padding: 10px 16px; }
     .search-input { width: 100%; margin-left: 0; margin-top: 4px; }
     .card-list { padding: 0 10px 16px; }
+    .cal-wrap  { padding: 0 10px 16px; }
     .card-header { padding: 10px 12px; flex-wrap: wrap; gap: 6px; }
-    .card-body { padding: 0 12px 12px; }
+    .card-body   { padding: 0 12px 12px; }
     .detail-grid { grid-template-columns: 78px 1fr; font-size: 12px; }
     .license-thumb { width: 80px; height: 50px; }
     .card-dates { font-size: 11px; }
+    .cal-cell { min-height: 48px; }
   }
 </style>
 </head>
@@ -205,7 +232,7 @@
 
 <!-- Header -->
 <div class="header">
-  <h1>88CAMPCAR 予約管理</h1>
+  <h1>88CAMPCAR <span>予約管理</span></h1>
   <div class="header-right">
     <span class="badge badge-pending" id="hdr-pending">0 受付中</span>
     <span class="badge badge-confirmed" id="hdr-confirmed">0 確定</span>
@@ -219,19 +246,117 @@
   <div class="stat-item"><strong id="s-pending" style="color:#f59e0b;">0</strong> 受付中</div>
   <div class="stat-item"><strong id="s-confirmed" style="color:#059669;">0</strong> 確定</div>
   <div class="stat-item"><strong id="s-cancelled" style="color:#ef4444;">0</strong> キャンセル</div>
+  <div class="stat-item" style="margin-left:auto;"><strong id="s-revenue" style="color:#f97316;">¥0</strong> 今月売上</div>
 </div>
+
+<!-- Alert Strip -->
+<div class="alert-strip" id="alert-strip"></div>
 
 <!-- Toolbar -->
 <div class="toolbar">
+  <div class="view-toggle">
+    <button class="view-btn active" id="vbtn-list" onclick="setView('list')">リスト</button>
+    <button class="view-btn" id="vbtn-cal" onclick="setView('cal')">カレンダー</button>
+  </div>
   <button class="filter-btn active" data-filter="all">すべて</button>
   <button class="filter-btn" data-filter="pending">受付中</button>
   <button class="filter-btn" data-filter="confirmed">確定</button>
   <button class="filter-btn" data-filter="cancelled">キャンセル</button>
   <input type="search" class="search-input" id="search-input" placeholder="名前・メール・電話で検索…" />
+  <button class="csv-btn" onclick="exportCsv()">CSV書き出し</button>
+</div>
+
+<!-- Calendar -->
+<div class="cal-wrap" id="cal-wrap">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="moveMonth(-1)">‹ 前月</button>
+    <span class="cal-month-label" id="cal-month-label"></span>
+    <button class="cal-nav-btn" onclick="moveMonth(1)">次月 ›</button>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="blocks-section" id="blocks-section">
+    <div class="blocks-header">
+      <span class="blocks-title">ブロック済み日程</span>
+      <button class="btn-add-block" onclick="showBlockModal()">+ 追加</button>
+    </div>
+    <div id="blocks-list"><div class="blocks-empty">ブロックなし</div></div>
+  </div>
+</div>
+
+<!-- Block Modal -->
+<div class="modal-overlay" id="block-modal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">日程ブロック追加</div></div>
+    <div class="modal-body">
+      <div class="modify-row">
+        <div class="modify-field">
+          <label class="modify-label" for="block-start">開始日</label>
+          <input class="modify-input" type="date" id="block-start" />
+        </div>
+        <div class="modify-field">
+          <label class="modify-label" for="block-end">終了日</label>
+          <input class="modify-input" type="date" id="block-end" />
+        </div>
+      </div>
+      <div class="modify-field">
+        <label class="modify-label" for="block-reason">理由（任意）</label>
+        <input class="modify-input" type="text" id="block-reason" placeholder="整備・個人使用 など" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-back" onclick="closeBlockModal()">戻る</button>
+      <button class="modal-btn" style="background:#111;color:#fff;" onclick="submitAddBlock()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar date filter bar -->
+<div class="cal-date-filter-bar" id="cal-date-bar">
+  <span id="cal-date-bar-label"></span>
+  <button class="cal-clear-btn" onclick="clearCalDate()">✕ クリア</button>
 </div>
 
 <!-- Card List -->
 <div class="card-list" id="card-list"></div>
+
+<!-- Cancel Modal -->
+<div class="modal-overlay" id="cancel-modal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">キャンセル確認</div></div>
+    <div class="modal-body" id="cancel-modal-body"></div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-back" onclick="closeCancelModal()">戻る</button>
+      <button class="modal-btn modal-btn-exec" id="cancel-modal-exec">キャンセル実行</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modify Modal -->
+<div class="modal-overlay" id="modify-modal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">日程変更</div></div>
+    <div class="modal-body">
+      <div class="modal-name" id="modify-modal-name"></div>
+      <div class="modal-dates" id="modify-modal-current"></div>
+      <div class="modify-row">
+        <div class="modify-field">
+          <label class="modify-label" for="modify-start">新しい開始日</label>
+          <input class="modify-input" type="date" id="modify-start" oninput="updateModifyDiff()" />
+        </div>
+        <div class="modify-field">
+          <label class="modify-label" for="modify-end">新しい終了日</label>
+          <input class="modify-input" type="date" id="modify-end" oninput="updateModifyDiff()" />
+        </div>
+      </div>
+      <div class="modify-diff" id="modify-diff"></div>
+      <p class="fee-note" id="modify-note" style="margin-top:10px;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-back" onclick="closeModifyModal()">戻る</button>
+      <button class="modal-btn" id="modify-modal-exec" style="background:#111;color:#fff;" onclick="submitModify()">変更実行</button>
+    </div>
+  </div>
+</div>
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt="拡大" /></div>
@@ -243,9 +368,7 @@
 // ローカル環境は 127.0.0.1:3000 に統一して、localhost の名前解決差異を回避する
 if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
   const localTarget = `http://127.0.0.1:3000${location.pathname}${location.search}${location.hash}`;
-  if (location.href !== localTarget) {
-    location.replace(localTarget);
-  }
+  if (location.href !== localTarget) location.replace(localTarget);
 }
 
 // ── State ──
@@ -255,22 +378,25 @@ let searchQuery = '';
 let csrfToken = '';
 let hadAuthenticatedSession = false;
 let sessionExpiredNotified = false;
+let currentView = 'list';
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calDateFilter = null;
 
 // ── DOM ──
 const $ = id => document.getElementById(id);
 const loginOverlay = $('login-overlay');
-const loginPass = $('login-pass');
-const loginBtn = $('login-btn');
-const loginErr = $('login-err');
-const loginDiag = $('login-diag');
-const cardList = $('card-list');
-const searchInput = $('search-input');
-const lightbox = $('lightbox');
-const lightboxImg = $('lightbox-img');
+const loginPass    = $('login-pass');
+const loginBtn     = $('login-btn');
+const loginErr     = $('login-err');
+const loginDiag    = $('login-diag');
+const cardList     = $('card-list');
+const searchInput  = $('search-input');
+const lightbox     = $('lightbox');
+const lightboxImg  = $('lightbox-img');
 
 const localApiBase = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-  ? 'http://127.0.0.1:3000'
-  : '';
+  ? 'http://127.0.0.1:3000' : '';
 const adminApiPrefix = '/x1/r';
 const healthPath = '/x1/ping';
 const suggestedAdminUrl = `${location.origin}/admin.html`;
@@ -280,16 +406,11 @@ async function apiFetch(input, init = {}) {
   try {
     return await fetch(input, opts);
   } catch (firstErr) {
-    // iPhone の一部ブラウザ/インアプリWebViewで fetch が失敗する場合に XHR へフォールバック
-    try {
-      return await xhrFetchLike(input, opts);
-    } catch (secondErr) {
+    try { return await xhrFetchLike(input, opts); }
+    catch (secondErr) {
       if (typeof input === 'string' && input.startsWith('/') && localApiBase) {
-        try {
-          return await fetch(`${localApiBase}${input}`, opts);
-        } catch {
-          return xhrFetchLike(`${localApiBase}${input}`, opts);
-        }
+        try { return await fetch(`${localApiBase}${input}`, opts); }
+        catch { return xhrFetchLike(`${localApiBase}${input}`, opts); }
       }
       throw secondErr || firstErr;
     }
@@ -302,35 +423,26 @@ function xhrFetchLike(input, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
     const headers = init.headers || {};
     const body = init.body;
-    const timeoutMs = 10_000;
-
     const xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     xhr.withCredentials = true;
-    xhr.timeout = timeoutMs;
-
+    xhr.timeout = 10_000;
     if (headers && typeof headers === 'object') {
       for (const [k, v] of Object.entries(headers)) {
         if (typeof v !== 'undefined') xhr.setRequestHeader(k, String(v));
       }
     }
-
     xhr.onload = () => {
       const responseText = xhr.responseText || '';
       const status = xhr.status || 0;
       resolve({
-        ok: status >= 200 && status < 300,
-        status,
+        ok: status >= 200 && status < 300, status,
         text: async () => responseText,
-        json: async () => {
-          try { return JSON.parse(responseText || '{}'); }
-          catch { throw new Error('Invalid JSON response'); }
-        }
+        json: async () => { try { return JSON.parse(responseText || '{}'); } catch { throw new Error('Invalid JSON'); } }
       });
     };
     xhr.onerror = () => reject(new Error('Network error'));
     xhr.ontimeout = () => reject(new Error('Network timeout'));
-
     if (typeof body === 'undefined' || body === null) xhr.send();
     else xhr.send(body);
   });
@@ -344,14 +456,8 @@ function renderDiag(msg) {
 async function checkApiConnectivity() {
   try {
     const r = await apiFetch(healthPath, { cache: 'no-store' });
-    if (!r.ok) {
-      renderDiag(`API応答異常 (${r.status})`);
-      return;
-    }
-    renderDiag('API接続OK');
-  } catch {
-    renderDiag('API接続NG（ブラウザ側の通信遮断の可能性）');
-  }
+    renderDiag(r.ok ? 'API接続OK' : `API応答異常 (${r.status})`);
+  } catch { renderDiag('API接続NG（ブラウザ側の通信遮断の可能性）'); }
 }
 
 // ── Auth ──
@@ -381,11 +487,7 @@ async function tryLogin() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: p })
     });
-    if (r.status === 401) {
-      loginErr.textContent = 'パスワードが正しくありません';
-      loginPass.select();
-      return;
-    }
+    if (r.status === 401) { loginErr.textContent = 'パスワードが正しくありません'; loginPass.select(); return; }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     sessionExpiredNotified = false;
     loginOverlay.classList.add('hidden');
@@ -415,6 +517,9 @@ async function load() {
     }
     reservations = await r.json();
     await fetchCsrfToken();
+    renderAlerts();
+    await loadBlocks();
+    renderCalendar();
     render();
     hadAuthenticatedSession = true;
     loginErr.textContent = '';
@@ -436,12 +541,20 @@ async function fetchCsrfToken() {
     if (!r.ok) throw new Error('csrf');
     const data = await r.json();
     csrfToken = data.csrfToken || '';
-  } catch {
-    csrfToken = '';
-  }
+  } catch { csrfToken = ''; }
 }
 
 // ── Helpers ──
+function dateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayStr() { return dateStr(new Date()); }
+
+function localDate(ds) {
+  const [y, m, d] = ds.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function plan(s, e) {
   const n = Math.round((new Date(e) - new Date(s)) / 864e5);
   if (n >= 7) return { name: 'Weekly Plan', cls: 'plan-weekly', ppd: 19000, n };
@@ -458,11 +571,140 @@ function sBadge(s) {
 function fmtD(d) { return d ? d.replace(/-/g, '/') : '—'; }
 function fmtDT(iso) { return iso ? new Date(iso).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : '—'; }
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-function licenseUrl(filename) {
-  return `${adminApiPrefix}/license/${encodeURIComponent(filename)}`;
+function licenseUrl(f) { return `${adminApiPrefix}/license/${encodeURIComponent(f)}`; }
+
+function cancelFeeInfo(r) {
+  const today = localDate(todayStr());
+  const start = localDate(r.start);
+  const days  = Math.round((start - today) / 86400000);
+  const p     = plan(r.start, r.end);
+  const total = r.paidAmount ?? (p.ppd * p.n);
+  let pct, label, cls;
+  if (days >= 8)      { pct = 0;   label = '8日以上前 — 全額返金';    cls = 'free'; }
+  else if (days >= 4) { pct = 30;  label = '4〜7日前 — 料金の30%課金'; cls = 'partial'; }
+  else if (days >= 1) { pct = 50;  label = '3日前〜前日 — 料金の50%課金'; cls = 'partial'; }
+  else                { pct = 100; label = '当日・無連絡 — 返金なし';  cls = 'full'; }
+  const fee    = Math.round(total * pct / 100);
+  const refund = total - fee;
+  return { pct, label, cls, fee, refund, total, days };
 }
 
-// ── Render ──
+// ── Alert Strip ──
+function renderAlerts() {
+  const today  = todayStr();
+  const now    = localDate(today);
+  const active = reservations.filter(r => r.status !== 'cancelled' && r.status !== 'pending_payment');
+  const checkIns  = active.filter(r => r.start === today);
+  const checkOuts = active.filter(r => r.end   === today);
+  const urgent = active
+    .filter(r => r.status === 'pending')
+    .map(r => ({ r, days: Math.round((localDate(r.start) - now) / 86400000) }))
+    .filter(({ days }) => days >= 0 && days <= 7);
+
+  const items = [];
+  checkIns.forEach(r  => items.push(`<span class="alert-item alert-checkin"><span class="dot"></span>チェックイン：${esc(r.name)}様</span>`));
+  checkOuts.forEach(r => items.push(`<span class="alert-item alert-checkout"><span class="dot"></span>チェックアウト：${esc(r.name)}様</span>`));
+  urgent.forEach(({ r, days }) => {
+    const dl = days === 0 ? '本日' : `${days}日後`;
+    items.push(`<span class="alert-item alert-urgent">⚠ 未確定 ${dl}：${esc(r.name)}様</span>`);
+  });
+
+  const strip = $('alert-strip');
+  if (items.length) {
+    strip.innerHTML = items.join('');
+    strip.classList.add('visible');
+  } else {
+    strip.classList.remove('visible');
+  }
+}
+
+// ── Calendar ──
+function renderCalendar() {
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth + 1, 0);
+  const todayD   = todayStr();
+
+  // Build dateMap: date → {confirmed, pending} counts
+  const dateMap = {};
+  reservations.forEach(r => {
+    if (r.status === 'cancelled' || r.status === 'pending_payment') return;
+    let d = localDate(r.start);
+    const end = localDate(r.end);
+    while (d <= end) {
+      const key = dateStr(d);
+      if (!dateMap[key]) dateMap[key] = { confirmed: 0, pending: 0 };
+      if (r.status === 'confirmed') dateMap[key].confirmed++;
+      else dateMap[key].pending++;
+      d.setDate(d.getDate() + 1);
+    }
+  });
+
+  let html = ['日','月','火','水','木','金','土'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  const startDOW = firstDay.getDay();
+  for (let i = 0; i < startDOW; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const counts  = dateMap[ds] || {};
+    const isToday = ds === todayD;
+    const isPast  = ds < todayD;
+    const isSel   = ds === calDateFilter;
+
+    let cls = 'cal-cell';
+    if (isToday) cls += ' today';
+    if (isPast)  cls += ' past';
+    if (isSel)   cls += ' selected';
+
+    html += `<div class="${cls}" onclick="selectCalDate('${ds}')">
+      <span class="cal-day-num">${d}</span>
+      ${counts.confirmed ? `<span class="cal-badge confirmed">${counts.confirmed}</span>` : ''}
+      ${counts.pending   ? `<span class="cal-badge pending">${counts.pending}</span>`   : ''}
+    </div>`;
+  }
+
+  $('cal-grid').innerHTML = html;
+  $('cal-month-label').textContent = `${calYear}年${calMonth+1}月`;
+}
+
+function moveMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function setCalFilter(ds) {
+  calDateFilter = ds;
+  const bar = $('cal-date-bar');
+  if (ds) {
+    const [y, m, d] = ds.split('-');
+    $('cal-date-bar-label').textContent = `${y}年${Number(m)}月${Number(d)}日 の予約`;
+    bar.classList.add('visible');
+  } else {
+    bar.classList.remove('visible');
+  }
+  renderCalendar();
+  render();
+}
+
+function selectCalDate(ds) { setCalFilter(calDateFilter === ds ? null : ds); }
+function clearCalDate()     { setCalFilter(null); }
+
+// ── View Toggle ──
+function setView(v) {
+  currentView = v;
+  $('vbtn-list').classList.toggle('active', v === 'list');
+  $('vbtn-cal').classList.toggle('active',  v === 'cal');
+  $('cal-wrap').classList.toggle('visible', v === 'cal');
+  if (v === 'list') setCalFilter(null);
+  else renderCalendar();
+}
+
+// ブロック用のAPIパス（adminApiPrefixと同じ /x1/r）
+// loadBlocks内で直接 /x1/r/blocks を使用するため変数を同期
+
+// ── Render Cards ──
 function render() {
   const pn = reservations.filter(r => r.status === 'pending').length;
   const cn = reservations.filter(r => r.status === 'confirmed').length;
@@ -473,21 +715,34 @@ function render() {
   $('s-cancelled').textContent = xn;
   $('hdr-pending').textContent = `${pn} 受付中`;
   $('hdr-confirmed').textContent = `${cn} 確定`;
+  const ym = todayStr().slice(0, 7);
+  const revenue = reservations
+    .filter(r => r.status !== 'cancelled' && r.status !== 'pending_payment' && r.start.startsWith(ym))
+    .reduce((sum, r) => { const p = plan(r.start, r.end); return sum + p.ppd * p.n; }, 0);
+  $('s-revenue').textContent = `¥${revenue.toLocaleString()}`;
 
   let list = [...reservations];
   if (currentFilter !== 'all') list = list.filter(r => r.status === currentFilter);
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
-    list = list.filter(r => [r.name, r.email, r.phone].some(v => (v || '').toLowerCase().includes(q)));
+    list = list.filter(r => [r.name, r.email, r.phone].some(v => (v||'').toLowerCase().includes(q)));
+  }
+  if (calDateFilter) {
+    list = list.filter(r => r.start <= calDateFilter && r.end >= calDateFilter);
   }
 
   if (!list.length) { cardList.innerHTML = '<div class="empty-state">予約がありません</div>'; return; }
 
+  const now = localDate(todayStr());
+
   cardList.innerHTML = list.map(r => {
-    const p = plan(r.start, r.end);
+    const p   = plan(r.start, r.end);
     const tot = p.ppd * p.n;
+    const daysUntil = Math.round((localDate(r.start) - now) / 86400000);
+    const isUrgent  = r.status === 'pending' && daysUntil >= 0 && daysUntil <= 7;
+
     return `
-      <div class="card" data-id="${r.id}">
+      <div class="card${isUrgent ? ' urgent' : ''}" data-id="${r.id}">
         <div class="card-header" onclick="toggle('${r.id}')">
           ${sBadge(r.status)}
           <span class="card-name">${esc(r.name)}</span>
@@ -508,17 +763,23 @@ function render() {
             <span class="detail-label">車両</span><span class="detail-value">${esc(r.vehicle || '—')}</span>
             <span class="detail-label">受付</span><span class="detail-value">${fmtDT(r.createdAt)}</span>
             ${r.updatedAt ? `<span class="detail-label">更新</span><span class="detail-value">${fmtDT(r.updatedAt)}</span>` : ''}
+            <span class="detail-label" style="padding-top:8px;">メモ</span>
+            <span class="detail-value" style="padding-top:6px;">
+              <textarea class="note-area" id="note-${r.id}" placeholder="内部メモ（お客様には非表示）">${esc(r.note || '')}</textarea>
+              <button class="btn-save-note" onclick="saveNote('${r.id}')">保存</button>
+            </span>
           </div>
           ${(r.licenseFront || r.licenseBack) ? `
             <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:4px;">免許証</div>
             <div class="license-thumbs">
               ${r.licenseFront ? `<img class="license-thumb" src="${licenseUrl(r.licenseFront)}" alt="表" onclick="openLB('${licenseUrl(r.licenseFront)}')" />` : ''}
-              ${r.licenseBack ? `<img class="license-thumb" src="${licenseUrl(r.licenseBack)}" alt="裏" onclick="openLB('${licenseUrl(r.licenseBack)}')" />` : ''}
+              ${r.licenseBack  ? `<img class="license-thumb" src="${licenseUrl(r.licenseBack)}"  alt="裏" onclick="openLB('${licenseUrl(r.licenseBack)}')"  />` : ''}
             </div>` : ''}
           <div class="action-bar">
             ${r.status !== 'confirmed' ? `<button class="action-btn btn-confirm" onclick="act('${r.id}','confirmed')">✓ 確定</button>` : ''}
-            ${r.status !== 'cancelled' ? `<button class="action-btn btn-cancel" onclick="act('${r.id}','cancelled')">✗ キャンセル</button>` : ''}
-            ${r.status !== 'pending' ? `<button class="action-btn btn-pending" onclick="act('${r.id}','pending')">↩ 受付中に戻す</button>` : ''}
+            ${r.status !== 'cancelled' ? `<button class="action-btn btn-cancel"  onclick="showCancelModal('${r.id}')">✗ キャンセル</button>` : ''}
+            ${r.status !== 'cancelled' ? `<button class="action-btn btn-pending" style="border-color:#6366f1;color:#6366f1;" onclick="showModifyModal('${r.id}')">📅 日程変更</button>` : ''}
+            ${r.status !== 'pending'   ? `<button class="action-btn btn-pending" onclick="act('${r.id}','pending')">↩ 受付中に戻す</button>` : ''}
             <button class="action-btn btn-delete" onclick="del('${r.id}','${esc(r.name)}')">🗑 削除</button>
           </div>
         </div>
@@ -533,23 +794,21 @@ function toggle(id) {
 }
 
 // ── Actions ──
-async function act(id, status) {
+async function act(id, status, extra = {}) {
   try {
     const r = await apiFetch(`${adminApiPrefix}/item/${id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken
-      },
-      body: JSON.stringify({ status })
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ status, ...extra })
     });
-    if (r.status === 403) {
-      await fetchCsrfToken();
-      throw new Error('再ログイン後に再試行してください');
-    }
-    if (!r.ok) throw 0;
+    if (r.status === 403) { await fetchCsrfToken(); throw new Error('再ログイン後に再試行してください'); }
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || '操作に失敗しました'); }
+    const data = await r.json();
     const label = { confirmed: '確定', cancelled: 'キャンセル', pending: '受付中' }[status];
-    toast(`ステータスを「${label}」に変更`);
+    const msg = status === 'cancelled' && data.refundAmount
+      ? `キャンセル完了 — ¥${data.refundAmount.toLocaleString()} Stripe返金済み`
+      : `ステータスを「${label}」に変更`;
+    toast(msg);
     load();
   } catch (err) { toast(err.message || '操作に失敗しました', true); }
 }
@@ -561,14 +820,150 @@ async function del(id, name) {
       method: 'DELETE',
       headers: { 'X-CSRF-Token': csrfToken }
     });
-    if (r.status === 403) {
-      await fetchCsrfToken();
-      throw new Error('再ログイン後に再試行してください');
-    }
+    if (r.status === 403) { await fetchCsrfToken(); throw new Error('再ログイン後に再試行してください'); }
     if (!r.ok) throw 0;
     toast('予約を削除しました'); load();
   } catch (err) { toast(err.message || '削除に失敗しました', true); }
 }
+
+// ── Cancel Modal ──
+let cancelTargetId = null;
+
+function showCancelModal(id) {
+  const r = reservations.find(x => x.id === id);
+  if (!r) return;
+  cancelTargetId = id;
+  const fi = cancelFeeInfo(r);
+  const p  = plan(r.start, r.end);
+  const hasStripe = !!r.stripeSessionId;
+
+  $('cancel-modal-body').innerHTML = `
+    <div class="modal-name">${esc(r.name)} 様</div>
+    <div class="modal-dates">${fmtD(r.start)} → ${fmtD(r.end)}（${p.n}泊 / ¥${fi.total.toLocaleString()}）</div>
+    <div class="fee-row ${fi.cls}">
+      <span class="fee-label">${fi.label}</span>
+      <span class="fee-value">${fi.pct === 0 ? '無料' : `${fi.pct}%課金`}</span>
+    </div>
+    <div class="fee-row neutral">
+      <span class="fee-label">返金額</span>
+      <span class="fee-value">¥${fi.refund.toLocaleString()}</span>
+    </div>
+    ${fi.fee > 0 ? `<div class="fee-row neutral">
+      <span class="fee-label">キャンセル料（徴収）</span>
+      <span class="fee-value" style="color:#ef4444;">¥${fi.fee.toLocaleString()}</span>
+    </div>` : ''}
+    ${hasStripe && fi.refund > 0 ? `
+    <label class="refund-toggle">
+      <input type="checkbox" id="cancel-refund-cb" checked>
+      Stripeで今すぐ自動返金する（¥${fi.refund.toLocaleString()}）
+    </label>` : `<p class="fee-note">${fi.refund > 0 ? '返金は手動でStripeダッシュボードから行ってください。' : ''}</p>`}
+    <p class="fee-note" style="margin-top:8px;">キャンセル確定後、お客様へ通知メールを送信します。</p>
+  `;
+  $('cancel-modal').classList.add('show');
+}
+
+function closeCancelModal() {
+  $('cancel-modal').classList.remove('show');
+  cancelTargetId = null;
+}
+
+$('cancel-modal-exec').addEventListener('click', async () => {
+  if (!cancelTargetId) return;
+  const id = cancelTargetId;
+  const autoRefund = $('cancel-refund-cb')?.checked ?? false;
+  closeCancelModal();
+  await act(id, 'cancelled', { autoRefund });
+});
+
+$('cancel-modal').addEventListener('click', e => {
+  if (e.target === $('cancel-modal')) closeCancelModal();
+});
+
+// ── Modify Modal ──
+let modifyTargetId = null;
+
+function showModifyModal(id) {
+  const r = reservations.find(x => x.id === id);
+  if (!r) return;
+  modifyTargetId = id;
+  $('modify-modal-name').textContent = `${r.name} 様`;
+  $('modify-modal-current').textContent = `現在: ${fmtD(r.start)} → ${fmtD(r.end)}`;
+  $('modify-start').value = r.start;
+  $('modify-end').value   = r.end;
+  updateModifyDiff();
+  $('modify-modal').classList.add('show');
+}
+
+function closeModifyModal() {
+  $('modify-modal').classList.remove('show');
+  modifyTargetId = null;
+}
+
+function updateModifyDiff() {
+  const r = reservations.find(x => x.id === modifyTargetId);
+  if (!r) return;
+  const newStart = $('modify-start').value;
+  const newEnd   = $('modify-end').value;
+  const diffEl   = $('modify-diff');
+  const noteEl   = $('modify-note');
+
+  if (!newStart || !newEnd || newStart >= newEnd) {
+    diffEl.className = 'modify-diff';
+    noteEl.textContent = newStart && newEnd && newStart >= newEnd ? '終了日は開始日より後にしてください' : '';
+    return;
+  }
+  const oldTotal = r.paidAmount || (() => { const op = plan(r.start, r.end); return op.ppd * op.n; })();
+  const np = plan(newStart, newEnd);
+  const newTotal = np.ppd * np.n;
+  const diff = newTotal - oldTotal;
+
+  if (diff < 0) {
+    diffEl.className = 'modify-diff visible refund';
+    diffEl.textContent = `差額返金: ¥${Math.abs(diff).toLocaleString()}（Stripeで自動処理）`;
+    noteEl.textContent = `新プラン: ${np.name}（${np.n}泊）/ ¥${newTotal.toLocaleString()}`;
+  } else if (diff > 0) {
+    diffEl.className = 'modify-diff visible charge';
+    diffEl.textContent = `追加請求: ¥${diff.toLocaleString()}（お客様に決済リンクをメール送信）`;
+    noteEl.textContent = `新プラン: ${np.name}（${np.n}泊）/ ¥${newTotal.toLocaleString()}`;
+  } else {
+    diffEl.className = 'modify-diff visible even';
+    diffEl.textContent = `料金変動なし — ${np.name}（${np.n}泊）/ ¥${newTotal.toLocaleString()}`;
+    noteEl.textContent = '';
+  }
+}
+
+async function submitModify() {
+  if (!modifyTargetId) return;
+  const newStart = $('modify-start').value;
+  const newEnd   = $('modify-end').value;
+  if (!newStart || !newEnd || newStart >= newEnd) {
+    toast('日程を正しく入力してください', true); return;
+  }
+  const id = modifyTargetId;
+  closeModifyModal();
+  try {
+    const r = await apiFetch(`${adminApiPrefix}/item/${id}/dates`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ start: newStart, end: newEnd })
+    });
+    if (r.status === 403) { await fetchCsrfToken(); throw new Error('再ログイン後に再試行してください'); }
+    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.error || '変更に失敗しました'); }
+    const data = await r.json();
+    if (data.diff < 0) {
+      toast(`日程変更 — ¥${Math.abs(data.diff).toLocaleString()} 返金処理済み`);
+    } else if (data.diff > 0) {
+      toast(`日程変更 — 追加決済リンクをお客様にメール送信しました`);
+    } else {
+      toast('日程を変更しました');
+    }
+    load();
+  } catch (err) { toast(err.message || '変更に失敗しました', true); }
+}
+
+$('modify-modal').addEventListener('click', e => {
+  if (e.target === $('modify-modal')) closeModifyModal();
+});
 
 // ── Lightbox ──
 function openLB(src) { lightboxImg.src = src; lightbox.classList.add('show'); }
@@ -593,6 +988,111 @@ document.querySelectorAll('.filter-btn').forEach(b => {
   });
 });
 searchInput.addEventListener('input', e => { searchQuery = e.target.value; render(); });
+
+// ── CSV Export ──
+function exportCsv() {
+  const statusMap = { pending: '受付中', confirmed: '確定', cancelled: 'キャンセル', pending_payment: '決済待ち' };
+  const headers = ['予約ID','お名前','メール','電話','プラン','開始日','終了日','泊数','料金','車両','ステータス','受付日時'];
+  const rows = reservations.map(r => {
+    const p = plan(r.start, r.end);
+    return [
+      r.id, r.name, r.email, r.phone,
+      p.name, r.start, r.end, p.n, p.ppd * p.n,
+      r.vehicle || '',
+      statusMap[r.status] || r.status,
+      r.createdAt ? new Date(r.createdAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : ''
+    ];
+  });
+  const csv = [headers, ...rows]
+    .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reservations_${todayStr()}.csv`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast(`${reservations.length}件をCSV書き出し`);
+}
+
+// ── Note Save ──
+async function saveNote(id) {
+  const val = $(`note-${id}`)?.value ?? '';
+  try {
+    const r = await apiFetch(`${adminApiPrefix}/item/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ note: val })
+    });
+    if (!r.ok) throw 0;
+    toast('メモを保存しました');
+  } catch { toast('メモの保存に失敗しました', true); }
+}
+
+// ── Blocked Dates ──
+let blocks = [];
+
+async function loadBlocks() {
+  try {
+    const r = await apiFetch('/x1/r/blocks');
+    if (r.ok) blocks = await r.json();
+    renderBlocks();
+  } catch {}
+}
+
+function renderBlocks() {
+  const el = $('blocks-list');
+  if (!blocks.length) { el.innerHTML = '<div class="blocks-empty">ブロックなし</div>'; return; }
+  el.innerHTML = blocks.map(b => `
+    <div class="block-item">
+      <span class="block-dates">${fmtD(b.start)} → ${fmtD(b.end)}</span>
+      <span class="block-reason">${esc(b.reason || '—')}</span>
+      <button class="btn-del-block" onclick="deleteBlock('${b.id}')">削除</button>
+    </div>`).join('');
+}
+
+function showBlockModal() {
+  $('block-start').value = '';
+  $('block-end').value = '';
+  $('block-reason').value = '';
+  $('block-modal').classList.add('show');
+}
+function closeBlockModal() { $('block-modal').classList.remove('show'); }
+
+async function submitAddBlock() {
+  const start  = $('block-start').value;
+  const end    = $('block-end').value;
+  const reason = $('block-reason').value;
+  if (!start || !end) { toast('日程を入力してください', true); return; }
+  if (start > end)    { toast('終了日は開始日以降にしてください', true); return; }
+  closeBlockModal();
+  try {
+    const r = await apiFetch('/x1/r/blocks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ start, end, reason })
+    });
+    if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.error || '追加に失敗しました'); }
+    toast(`ブロックを追加しました（${fmtD(start)}〜${fmtD(end)}）`);
+    await loadBlocks(); renderCalendar();
+  } catch (err) { toast(err.message || '追加に失敗しました', true); }
+}
+
+async function deleteBlock(id) {
+  if (!confirm('このブロックを削除しますか？')) return;
+  try {
+    const r = await apiFetch(`/x1/r/blocks/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-Token': csrfToken }
+    });
+    if (!r.ok) throw 0;
+    toast('ブロックを削除しました');
+    await loadBlocks(); renderCalendar();
+  } catch { toast('削除に失敗しました', true); }
+}
+
+$('block-modal').addEventListener('click', e => { if (e.target === $('block-modal')) closeBlockModal(); });
 
 // ── Auto-refresh 30s ──
 setInterval(() => { if (document.visibilityState === 'visible') load(); }, 30000);

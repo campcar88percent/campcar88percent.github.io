@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>88CAMPCAR — 車両引渡確認書・備品チェックリスト（印刷用）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; color: #000; font-size: 12px; line-height: 1.5; background: #e8e8e8; }
+
+  /* 画面上の操作バー（印刷時は非表示） */
+  .toolbar { position: sticky; top: 0; background: #000; color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+  .toolbar b { color: #f97316; }
+  .toolbar button { background: #f97316; color: #fff; border: 0; padding: 10px 22px; font-size: 13px; font-weight: 800; border-radius: 6px; cursor: pointer; letter-spacing: .05em; }
+  .toolbar .hint { font-size: 11px; color: #999; }
+
+  .page {
+    width: 210mm; min-height: 297mm; padding: 14mm 14mm 12mm;
+    background: #fff; margin: 16px auto; box-shadow: 0 2px 16px rgba(0,0,0,.12);
+    page-break-after: always; position: relative;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .doc-head { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 3px solid #000; padding-bottom: 8px; margin-bottom: 14px; }
+  .logo { font-size: 16px; font-weight: 900; letter-spacing: .06em; }
+  .logo span { color: #000; }
+  .doc-title { font-size: 20px; font-weight: 900; letter-spacing: .04em; }
+  .doc-sub { font-size: 10px; color: #000; text-align: right; }
+
+  table { width: 100%; border-collapse: collapse; }
+  .kv th, .kv td { border: 1px solid #000; padding: 4px 8px; font-size: 12px; text-align: left; vertical-align: middle; }
+  .kv th { background: #fff; font-weight: 700; width: 90px; white-space: nowrap; }
+  .fill { color: #000; }
+
+  .sec-title { font-size: 13px; font-weight: 800; background: #000; color: #fff; padding: 4px 10px; margin: 9px 0 5px; letter-spacing: .05em; }
+
+  .two-col { display: flex; gap: 10px; }
+  .two-col > div { flex: 1; }
+
+  .diagram { border: 1px solid #000; padding: 6px; }
+  .diagram-legend { font-size: 10px; color: #000; margin-top: 6px; line-height: 1.7; }
+  .diagram-legend b { color: #000; }
+
+  .check-table th, .check-table td { border: 1px solid #000; padding: 5px 7px; font-size: 11px; text-align: center; }
+  .check-table th { background: #fff; font-weight: 700; }
+  .check-table td.item { text-align: left; }
+  .check-box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #000; }
+
+  .sign-row { display: flex; gap: 10px; margin-top: 14px; }
+  .sign-box { flex: 1; border: 1px solid #000; padding: 6px 10px; min-height: 42px; }
+  .sign-box .lbl { font-size: 10px; color: #000; font-weight: 700; margin-bottom: 4px; }
+
+  .note { font-size: 10px; color: #000; line-height: 1.6; margin-top: 6px; }
+  .note b { color: #000; }
+
+  .emg { border: 2px solid #000; padding: 14px; margin-top: 8px; }
+  .emg h3 { font-size: 14px; margin-bottom: 8px; }
+  .emg .big { font-size: 18px; font-weight: 900; color: #000; }
+  .emg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .emg-card { border: 1px solid #000; padding: 10px; }
+  .emg-card .t { font-size: 10px; color: #000; font-weight: 700; }
+  .emg-card .n { font-size: 16px; font-weight: 900; color: #000; }
+
+  .steps { counter-reset: s; margin-top: 8px; }
+  .steps li { list-style: none; padding: 6px 0 6px 30px; position: relative; border-bottom: 1px dashed #000; font-size: 12px; }
+  .steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 6px; width: 20px; height: 20px; background: #000; color: #fff; border-radius: 50%; text-align: center; line-height: 20px; font-weight: 800; font-size: 11px; }
+
+  .foot { margin-top: 12px; border-top: 1px solid #000; padding-top: 5px; font-size: 9px; color: #000; display: flex; justify-content: space-between; }
+
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none; }
+    .page { margin: 0; box-shadow: none; width: auto; min-height: auto; padding: 9mm; }
+    /* 黒背景の見出し・表ヘッダを白黒プリンタでも確実に印刷する */
+    .sec-title, .kv th, .check-table th, .steps li::before,
+    .doc-head {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    /* 印刷範囲の切り替え（予約ごと＝1〜2枚目／ラミネート＝3枚目） */
+    body.print-booking .laminate { display: none; }
+    body.print-booking .booking + .booking { page-break-after: auto; }
+    body.print-laminate .booking { display: none; }
+  }
+  @page { size: A4; margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span>88<b>CAMPCAR</b> — 車両引渡確認書・備品チェックリスト</span>
+  <span>
+    <button onclick="printOnly('booking')">🖨 予約ごとに印刷（1〜2枚目）</button>
+    <button onclick="printOnly('laminate')">🖨 ラミネート用（3枚目）</button>
+  </span>
+  <span class="hint">予約ごとは1〜2枚目を印刷。3枚目は1回だけ印刷してラミネートし車内常備。</span>
+</div>
+
+<!-- ───────── Page 1: 車両引渡確認書 ───────── -->
+<div class="page booking">
+  <div class="doc-head">
+    <div>
+      <div class="logo">88<span>CAMPCAR</span></div>
+      <div class="doc-title">車両引渡確認書</div>
+    </div>
+    <div class="doc-sub">
+      株式会社88PERCENT / 担当：鈴木<br>
+      〒905-0009 沖縄県名護市宇茂佐の森2丁目1-9<br>
+      TEL 080-8520-6929
+    </div>
+  </div>
+
+  <p style="font-size:10px;margin-bottom:4px;">■ 以下は<b>当社が記入</b>します（お客様の記入は不要です）</p>
+  <table class="kv">
+    <tr>
+      <th>予約ID</th><td class="fill">　</td>
+      <th>車両</th><td>スーパーロングハイエース</td>
+    </tr>
+    <tr>
+      <th>お名前</th><td colspan="3" class="fill">　　　　　　　　　　　　　　　　　　様</td>
+    </tr>
+    <tr>
+      <th>貸渡日時</th><td class="fill">　　　年　　月　　日　　　：　　</td>
+      <th>返却日時</th><td class="fill">　　　年　　月　　日　　　：　　</td>
+    </tr>
+    <tr>
+      <th>走行距離</th><td>出発 <span class="fill">　　　　</span> km ／ 返却 <span class="fill">　　　　</span> km</td>
+      <th>燃料計</th><td>出発 <span class="fill">　／8</span> ／ 返却 <span class="fill">　／8</span></td>
+    </tr>
+  </table>
+
+  <div class="sec-title">① 既存の傷・へこみ図（当社が貸渡前に記入済み／お客様は現車と照合してください）</div>
+  <div class="diagram">
+    <svg viewBox="0 18 760 268" style="display:block;width:54%;margin:0 auto">
+      <!-- 上から見たハイエース（長方形の箱型・俯瞰図）。前＝左 / 後＝右 -->
+      <!-- 車体外形（長方形） -->
+      <rect x="130" y="72" width="500" height="156" rx="8" ry="8" fill="none" stroke="#000" stroke-width="2"/>
+      <!-- フロントガラスの分割線 -->
+      <line x1="200" y1="72" x2="200" y2="228" stroke="#000" stroke-width="1.2"/>
+      <!-- 屋根センターライン -->
+      <line x1="200" y1="150" x2="610" y2="150" stroke="#000" stroke-width="1" stroke-dasharray="6 5"/>
+      <!-- ドア／ピラーの分割線 -->
+      <line x1="310" y1="72" x2="310" y2="228" stroke="#000" stroke-width="1"/>
+      <line x1="430" y1="72" x2="430" y2="228" stroke="#000" stroke-width="1"/>
+      <line x1="550" y1="72" x2="550" y2="228" stroke="#000" stroke-width="1"/>
+      <!-- リアゲートの分割線 -->
+      <line x1="610" y1="72" x2="610" y2="228" stroke="#000" stroke-width="1.2"/>
+      <!-- タイヤ（上から見て車体脇にはみ出す表現） -->
+      <rect x="225" y="60" width="48" height="14" rx="3" fill="#fff" stroke="#000"/>
+      <rect x="225" y="226" width="48" height="14" rx="3" fill="#fff" stroke="#000"/>
+      <rect x="500" y="60" width="48" height="14" rx="3" fill="#fff" stroke="#000"/>
+      <rect x="500" y="226" width="48" height="14" rx="3" fill="#fff" stroke="#000"/>
+      <!-- ドアミラー -->
+      <path d="M182 72 l-8 -16 l14 3 z" fill="#fff" stroke="#000"/>
+      <path d="M182 228 l-8 16 l14 -3 z" fill="#fff" stroke="#000"/>
+      <!-- 方向・面ラベル -->
+      <text x="118" y="150" font-size="12" font-weight="700" text-anchor="middle" transform="rotate(-90 118 150)">前（フロント）</text>
+      <text x="648" y="150" font-size="12" font-weight="700" text-anchor="middle" transform="rotate(90 648 150)">後（リア）</text>
+      <text x="400" y="30" font-size="11" font-weight="700" text-anchor="middle">右側面（運転席側）</text>
+      <text x="400" y="274" font-size="11" font-weight="700" text-anchor="middle">左側面（助手席側）</text>
+      <text x="400" y="112" font-size="10" fill="#000" text-anchor="middle">屋根（天井）</text>
+    </svg>
+    <div class="diagram-legend">
+      記号：<b>○＝キズ　△＝へこみ　×＝割れ・欠け　◎＝汚れ</b>　／　<b>黒印＝当社が記入済みの既存の傷</b>。上図は貸渡前に当社が記入しています。お客様は現車と照合し、下表A（当社記入済み）の内容が実車と一致することをご確認ください。
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:8px;">
+    <div>
+      <table class="check-table">
+        <tr><th colspan="3" style="text-align:left;">A. 既存の傷（当社記入済み）</th></tr>
+        <tr><th style="width:30px;">No.</th><th>箇所・内容</th><th style="width:60px;">お客様<br>確認</th></tr>
+        <tr><td>1</td><td class="item">&nbsp;</td><td>□</td></tr>
+        <tr><td>2</td><td class="item">&nbsp;</td><td>□</td></tr>
+        <tr><td>3</td><td class="item">&nbsp;</td><td>□</td></tr>
+      </table>
+    </div>
+    <div>
+      <table class="check-table">
+        <tr><th colspan="2" style="text-align:left;">B. 返却時の新規損傷（当社記入）</th></tr>
+        <tr><th style="width:30px;">No.</th><th>箇所・内容</th></tr>
+        <tr><td>1</td><td class="item">&nbsp;</td></tr>
+        <tr><td>2</td><td class="item">&nbsp;</td></tr>
+        <tr><td>3</td><td class="item">&nbsp;</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec-title">② お客様 確認・署名（出発前）</div>
+  <table class="check-table">
+    <tr><td class="item"><span class="check-box"></span>　外装4面・傷・燃料計をスマートフォンで撮影した</td></tr>
+    <tr><td class="item"><span class="check-box"></span>　表Aの既存傷を現車と照合し、<b>記載以外の傷は無い</b>ことを確認した</td></tr>
+    <tr><td class="item"><span class="check-box"></span>　タイヤ・ライト等、車両に異常がないことを確認した</td></tr>
+    <tr><td class="item" style="font-size:10px;">記載外の既存傷を見つけた場合のみ記入（<b>出発前に要連絡</b>）：<span class="fill">　　　　　　　　　　　　　　　　　　　　</span></td></tr>
+  </table>
+
+  <div class="note">
+    <b>傷の基準：</b>上図・表A（当社が貸渡前に記入）が損害判定の基準です。<b>表Aに記載のない損傷が返却時に確認された場合は、利用期間中に生じたものとして取り扱います。</b>出発前・返却前に「外装4面／傷／燃料計」を必ず撮影・保存してください。記載外の既存傷は出発前に写真付きで担当へご連絡ください（事後申告は不可）。
+  </div>
+
+  <div class="sign-row">
+    <div class="sign-box"><div class="lbl">出発時 お客様署名（上記を確認）</div></div>
+    <div class="sign-box"><div class="lbl">返却時 お客様署名（返却状態を確認）</div></div>
+  </div>
+
+  <table class="kv" style="margin-top:8px;">
+    <tr>
+      <th>当社記入者</th><td class="fill">　</td>
+      <th>貸渡前点検日時</th><td class="fill">　　　年　　月　　日　　　：　　</td>
+    </tr>
+  </table>
+  <p style="font-size:9px;margin-top:3px;">※当社は貸渡前（前回返却後）に車両状態を撮影・保存し、上図・表Aに既存の傷を記入しています。この記録が損害判定の基準です。</p>
+
+  <div class="foot"><span>88CAMPCAR 車両引渡確認書</span><span>予約ごと 1 / 2</span></div>
+</div>
+
+<!-- ───────── Page 2: 備品チェックリスト ───────── -->
+<div class="page booking">
+  <div class="doc-head">
+    <div>
+      <div class="logo">88<span>CAMPCAR</span></div>
+      <div class="doc-title">備品チェックリスト</div>
+    </div>
+    <div class="doc-sub">出発時／返却時の2回、数量をご確認ください</div>
+  </div>
+
+  <table class="check-table">
+    <tr><th style="width:44%;">品目</th><th style="width:70px;">数量</th><th style="width:80px;">出発時</th><th style="width:80px;">返却時</th><th>備考</th></tr>
+    <tr><td class="item">鍵（本体・スペア）</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">車検証・自賠責証明書</td><td>各1</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">寝袋</td><td>2</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">ポータブル電源・充電ケーブル</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">外部電源コード</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">カセットコンロ・調理器具</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">食器・カトラリー</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">取扱説明書・緊急連絡カード</td><td>各1</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">　</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+    <tr><td class="item">　</td><td>　</td><td>□</td><td>□</td><td></td></tr>
+  </table>
+
+  <div class="note">
+    返却時に不足・破損があった場合は、下欄にご記入のうえ担当までご連絡ください。備品の紛失・破損は実費を申し受ける場合があります。
+  </div>
+
+  <div class="sec-title">返却時の申し送り・不足/破損メモ</div>
+  <table class="kv"><tr><td style="height:70px;" class="fill">　</td></tr></table>
+
+  <div class="sign-row">
+    <div class="sign-box"><div class="lbl">出発時 確認者署名</div></div>
+    <div class="sign-box"><div class="lbl">返却時 確認者署名</div></div>
+  </div>
+
+  <div class="foot"><span>88CAMPCAR 備品チェックリスト</span><span>予約ごと 2 / 2</span></div>
+</div>
+
+<!-- ───────── Page 3: 事故・緊急時対応カード（ラミネート用・車内常備） ───────── -->
+<div class="page laminate">
+  <div class="doc-head">
+    <div>
+      <div class="logo">88<span>CAMPCAR</span></div>
+      <div class="doc-title">事故・緊急時 対応カード</div>
+    </div>
+    <div class="doc-sub">ラミネート加工し、車内（グローブボックス）に常備<br>※予約ごとの印刷は不要（1回のみ）</div>
+  </div>
+
+  <div class="emg">
+    <h3>事故が起きたら（必ずこの順番で）</h3>
+    <ol class="steps">
+      <li><b>負傷者の救護・安全確保</b> — 二次事故を防ぐため安全な場所へ移動し、ハザードを点灯。</li>
+      <li><b>警察へ連絡（110）</b> — 物損・人身を問わず必ず届け出てください。<b>事故証明がないと保険が使えません。</b></li>
+      <li><b>負傷者がいれば救急（119）</b></li>
+      <li><b>担当（鈴木）へ連絡</b> — 状況を報告し指示を受けてください。</li>
+      <li><b>保険会社・ロードサービスへ連絡</b> — 下記連絡先へ。</li>
+      <li><b>相手方の情報と現場を記録</b> — 氏名・連絡先・車番・保険会社、現場写真を撮影。</li>
+    </ol>
+  </div>
+
+  <div class="emg-grid">
+    <div class="emg-card"><div class="t">担当（鈴木）9〜18時</div><div class="n">080-8520-6929</div></div>
+    <div class="emg-card"><div class="t">JAF ロードサービス 24時間</div><div class="n">#8139</div></div>
+    <div class="emg-card"><div class="t">警察</div><div class="n">110</div></div>
+    <div class="emg-card"><div class="t">消防・救急</div><div class="n">119</div></div>
+    <div class="emg-card" style="grid-column:1 / span 2;"><div class="t">保険ロードサービス（任意保険）</div><div class="n fill">　　　　　　　　　　　　　　　　</div></div>
+  </div>
+
+  <div class="sec-title">車両について</div>
+  <table class="kv">
+    <tr><th>給油</th><td>ガソリン満タン返しでお願いします（レギュラー）。</td></tr>
+    <tr><th>設備</th><td>車内にトイレ・シャワーはありません。道の駅・温泉・コインシャワー等をご利用ください。</td></tr>
+    <tr><th>返却場所</th><td>〒905-0009 沖縄県名護市宇茂佐の森2丁目1-9（貸出と同じ場所）</td></tr>
+    <tr><th>返却時</th><td>元の駐車スペースへ → 車両4面・傷・燃料計を撮影 → 鍵をキーボックスへ戻し施錠 → ダイヤルをずらす</td></tr>
+    <tr><th>返却遅延</th><td>契約日時を過ぎた場合、超過1日ごとに通常日額（¥26,000／日）を申し受けます。遅れる場合は必ず事前にご連絡ください。</td></tr>
+  </table>
+
+  <div class="foot"><span>88CAMPCAR 事故・緊急時対応カード</span><span>ラミネート用・車内常備</span></div>
+</div>
+
+<script>
+  function printOnly(mode) {
+    document.body.classList.remove('print-booking', 'print-laminate');
+    document.body.classList.add('print-' + mode);
+    window.print();
+  }
+  window.addEventListener('afterprint', function () {
+    document.body.classList.remove('print-booking', 'print-laminate');
+  });
+</script>
+
+</body>
+</html>

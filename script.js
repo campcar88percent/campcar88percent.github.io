@@ -84,9 +84,9 @@ function hasBookedInRange(startStr, endStr) {
 
 function determinePlan(startStr, endStr) {
     const nights = daysBetween(startStr, endStr) - 1;
-    if (nights >= 7) return { plan: 'weekly', name: 'Weekly Plan', pricePerDay: 19000, nights };
-    if (nights >= 4) return { plan: 'medium', name: 'Medium Plan', pricePerDay: 22000, nights };
-    return { plan: 'short', name: 'Short Stay', pricePerDay: 26000, nights };
+    if (nights >= 7) return { plan: 'weekly', name: 'ウィークリープラン', pricePerDay: 19000, nights };
+    if (nights >= 4) return { plan: 'medium', name: 'ミディアムプラン', pricePerDay: 22000, nights };
+    return { plan: 'short', name: 'ショートステイ', pricePerDay: 26000, nights };
 }
 
 function formatDateJP(str) {
@@ -139,13 +139,13 @@ function updateSelectionUI() {
         planBadge.classList.remove('hidden');
         if (info.plan === 'weekly') {
             planBadge.className = 'ml-2 px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-full bg-orange-100 text-orange-600';
-            planBadge.textContent = `Weekly Plan ・ ${info.nights}泊`;
+            planBadge.textContent = `ウィークリープラン ・ ${info.nights}泊`;
         } else if (info.plan === 'medium') {
             planBadge.className = 'ml-2 px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-full bg-blue-100 text-blue-600';
-            planBadge.textContent = `Medium Plan ・ ${info.nights}泊`;
+            planBadge.textContent = `ミディアムプラン ・ ${info.nights}泊`;
         } else {
             planBadge.className = 'ml-2 px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-full bg-black/10 text-black/70';
-            planBadge.textContent = `Short Stay ・ ${info.nights}泊`;
+            planBadge.textContent = `ショートステイ ・ ${info.nights}泊`;
         }
     }
 
@@ -301,13 +301,13 @@ function openReserve() {
             modalPlanInfo.classList.remove('hidden');
             if (info.plan === 'weekly') {
                 modalPlanInfo.className = 'mb-6 p-4 rounded-lg border-2 border-orange-500 bg-orange-50';
-                if (modalPlanName) { modalPlanName.textContent = 'Weekly Plan'; modalPlanName.className = 'text-xs font-black uppercase tracking-[0.2em] text-orange-500'; }
+                if (modalPlanName) { modalPlanName.textContent = 'ウィークリープラン'; modalPlanName.className = 'text-xs font-black uppercase tracking-[0.2em] text-orange-500'; }
             } else if (info.plan === 'medium') {
                 modalPlanInfo.className = 'mb-6 p-4 rounded-lg border-2 border-blue-400 bg-blue-50';
-                if (modalPlanName) { modalPlanName.textContent = 'Medium Plan'; modalPlanName.className = 'text-xs font-black uppercase tracking-[0.2em] text-blue-500'; }
+                if (modalPlanName) { modalPlanName.textContent = 'ミディアムプラン'; modalPlanName.className = 'text-xs font-black uppercase tracking-[0.2em] text-blue-500'; }
             } else {
                 modalPlanInfo.className = 'mb-6 p-4 rounded-lg border-2 border-black/20 bg-gray-50';
-                if (modalPlanName) { modalPlanName.textContent = 'Short Stay'; modalPlanName.className = 'text-xs font-black uppercase tracking-[0.2em] text-black/60'; }
+                if (modalPlanName) { modalPlanName.textContent = 'ショートステイ'; modalPlanName.className = 'text-xs font-black uppercase tracking-[0.2em] text-black/60'; }
             }
             const total = info.pricePerDay * info.nights;
             if (modalPlanDates) modalPlanDates.textContent = `${formatDateJP(calSelStart)} 〜 ${formatDateJP(calSelEnd)}（${info.nights}泊）`;

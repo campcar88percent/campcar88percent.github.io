@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>88CAMPCAR — 予約確認</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', 'Noto Sans JP', sans-serif; background: #f5f5f5; color: #111; min-height: 100vh; }
+
+  .header { background: #111; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .header-logo { font-size: 15px; font-weight: 900; letter-spacing: .06em; }
+  .header-logo span { color: #f97316; }
+  .header-sub { font-size: 11px; color: #888; font-weight: 600; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  .status-card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 16px; }
+  .status-header { padding: 20px 20px 16px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px; }
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 800; }
+  .badge-pending   { background: #fef3c7; color: #92400e; }
+  .badge-confirmed { background: #d1fae5; color: #065f46; }
+  .badge-cancelled { background: #fee2e2; color: #991b1b; }
+  .status-name { font-size: 18px; font-weight: 900; }
+  .status-body { padding: 16px 20px; }
+  .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #999; font-weight: 600; font-size: 12px; }
+  .info-value { font-weight: 700; }
+  .info-value.orange { color: #f97316; font-size: 15px; }
+
+  .keybox-card { background: #111; color: #fff; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .keybox-label { font-size: 11px; font-weight: 700; color: #888; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+  .keybox-code { font-size: 40px; font-weight: 900; letter-spacing: .15em; color: #f97316; line-height: 1; margin-bottom: 12px; }
+  .keybox-steps { font-size: 12px; color: #aaa; line-height: 1.8; }
+  .keybox-steps li { list-style: none; padding-left: 1.2em; position: relative; }
+  .keybox-steps li::before { content: '→'; position: absolute; left: 0; color: #f97316; }
+
+  .info-card { background: #fff; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+  .info-card-title { font-size: 12px; font-weight: 800; color: #888; letter-spacing: .06em; margin-bottom: 10px; }
+  .info-card p { font-size: 13px; font-weight: 600; color: #444; line-height: 1.7; }
+  .info-card a { color: #f97316; text-decoration: none; font-weight: 700; }
+
+  .loading { text-align: center; padding: 80px 24px; color: #bbb; font-size: 14px; font-weight: 600; }
+  .error-box { background: #fee2e2; color: #991b1b; border-radius: 12px; padding: 20px; text-align: center; font-size: 14px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">88CAMP<span>CAR</span></div>
+    <div class="header-sub">予約確認ページ</div>
+  </div>
+</div>
+
+<div class="container" id="container">
+  <div class="loading">読み込み中…</div>
+</div>
+
+<script>
+(async () => {
+  const token = new URLSearchParams(location.search).get('token');
+  const el = document.getElementById('container');
+
+  if (!token) {
+    el.innerHTML = '<div class="error-box">予約確認URLが正しくありません。<br>メールに記載のURLをご確認ください。</div>';
+    return;
+  }
+
+  let data;
+  try {
+    const r = await fetch(`/api/booking/${encodeURIComponent(token)}`);
+    if (!r.ok) throw new Error();
+    data = await r.json();
+  } catch {
+    el.innerHTML = '<div class="error-box">予約が見つかりません。<br>URLが正しいかご確認ください。</div>';
+    return;
+  }
+
+  const statusMap  = { pending: ['受付中（確認中）', 'badge-pending'], confirmed: ['確定', 'badge-confirmed'], cancelled: ['キャンセル済', 'badge-cancelled'] };
+  const [statusLabel, statusCls] = statusMap[data.status] || ['不明', 'badge-pending'];
+  const fmtD = s => s ? s.replace(/-/g, '/') : '—';
+  const active = data.status === 'pending' || data.status === 'confirmed';
+
+  el.innerHTML = `
+    <div class="status-card">
+      <div class="status-header">
+        <span class="status-badge ${statusCls}">${statusLabel}</span>
+        <span class="status-name">${data.name} 様</span>
+      </div>
+      <div class="status-body">
+        <div class="info-row"><span class="info-label">期間</span><span class="info-value">${fmtD(data.start)} → ${fmtD(data.end)}</span></div>
+        <div class="info-row"><span class="info-label">プラン</span><span class="info-value orange">${data.planName}（${data.nights}泊）</span></div>
+        <div class="info-row"><span class="info-label">料金</span><span class="info-value">¥${data.total.toLocaleString()}</span></div>
+        <div class="info-row"><span class="info-label">車両</span><span class="info-value">${data.vehicle || '—'}</span></div>
+        <div class="info-row"><span class="info-label">予約ID</span><span class="info-value" style="font-size:11px;color:#aaa;">${data.id}</span></div>
+      </div>
+    </div>
+
+    ${active && data.keyBox ? `
+    <div class="keybox-card">
+      <div class="keybox-label">キーボックス暗証番号</div>
+      <div class="keybox-code">${data.keyBox}</div>
+      <ul class="keybox-steps">
+        <li>駐車場でキーボックスを確認</li>
+        <li>暗証番号を入力して鍵を取り出す</li>
+        <li>出発前に車両写真を撮影（4面・傷・燃料計）</li>
+        <li>返却後は鍵を戻し、番号をランダムにずらす</li>
+      </ul>
+    </div>` : ''}
+
+    ${active ? `
+    <div class="info-card">
+      <div class="info-card-title">貸出・返却場所</div>
+      <p>
+        〒905-0009 沖縄県名護市宇茂佐の森2丁目1-9<br>
+        名護バスターミナルから約550m（徒歩約7分）。<br>
+        タクシーなら初乗り料金（ワンメーター）の距離です。<br>
+        貸出・返却はいずれも同じ場所です。
+      </p>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">返却時間の超過について</div>
+      <p>
+        ご返却が契約日時を過ぎた場合、超過1日ごとに通常日額（¥26,000／日）を追加で申し受けます。<br>
+        やむを得ず遅れる場合は、必ず事前に担当（鈴木）までご連絡ください。
+      </p>
+    </div>` : ''}
+
+    ${data.status === 'cancelled' ? `
+    <div class="info-card">
+      <div class="info-card-title">キャンセル済み</div>
+      <p>この予約はキャンセルされています。<br>ご不明な点は担当（鈴木）までお問い合わせください。</p>
+    </div>` : ''}
+
+    <div class="info-card">
+      <div class="info-card-title">緊急連絡先</div>
+      <p>
+        担当（鈴木）: <a href="tel:080-8520-6929">080-8520-6929</a>（9〜18時）<br>
+        JAF: <a href="tel:#8139">#8139</a>（24時間）
+      </p>
+    </div>
+  `;
+})();
+</script>
+</body>
+</html>

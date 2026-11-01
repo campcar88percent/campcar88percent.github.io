@@ -34,6 +34,32 @@ const ADMIN_PASS_HASH = process.env.ADMIN_PASS_HASH || '';
 const ADMIN_COOKIE_NAME = 'admin_session';
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const stripe = STRIPE_SECRET_KEY ? Stripe(STRIPE_SECRET_KEY) : null;
+const KEY_BOX_CODE   = process.env.KEY_BOX_CODE   || '（管理者にお問い合わせください）';
+const INSURANCE_TEL  = process.env.INSURANCE_TEL  || '（管理者にお問い合わせください）';
+const KEEP_ALIVE_URL = process.env.KEEP_ALIVE_URL || '';
+
+// メール共通ブロック（定数はモジュールトップで確定）
+const EMAIL_EMERGENCY_CONTACTS = `【緊急連絡先】
+・担当（鈴木）     : 080-8520-6929（9〜18時）
+・保険ロードサービス: ${INSURANCE_TEL}
+・JAF           : #8139（24時間）`;
+const EMAIL_COMPANY_FOOTER = `88CAMPCAR / 株式会社88PERCENT
+担当：鈴木 / 080-8520-6929
+${BASE_URL}`;
+const EMAIL_HR = '━━━━━━━━━━━━━━━━━━━━';
+const EMAIL_LOCATION = `【貸出・返却場所】
+〒905-0009 沖縄県名護市宇茂佐の森2丁目1-9
+名護バスターミナルから約550m（徒歩約7分）。
+タクシーなら初乗り料金（ワンメーター）の距離です。
+貸出・返却はいずれも同じ場所です。`;
+const EMAIL_OVERDUE_POLICY = `【返却時間の超過について】
+ご返却が契約日時を過ぎた場合、超過1日ごとに通常日額（¥26,000／日）を追加で申し受けます。
+やむを得ず遅れる場合は、必ず事前に担当（鈴木 / 080-8520-6929）までご連絡ください。`;
+
+/** Date → YYYY-MM-DD（ローカル時刻） */
+function jstDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 if (!ADMIN_PASS_HASH) {
   console.error('⛔ ADMIN_PASS_HASH が未設定です。ハッシュ必須モードのためサーバーを起動できません。');
@@ -107,6 +133,10 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
       if (idx !== -1 && list[idx].status === 'pending_payment') {
         list[idx].status = 'pending';
         list[idx].stripeSessionId = session.id;
+        list[idx].stripePaymentIntentId = session.payment_intent || null;
+        const _wp = determinePlan(list[idx].start, list[idx].end);
+        list[idx].paidAmount = _wp.pricePerDay * _wp.nights;
+        list[idx].viewToken = list[idx].viewToken || crypto.randomBytes(24).toString('hex');
         list[idx].updatedAt = new Date().toISOString();
         await writeReservations(list);
         Promise.allSettled([
@@ -189,6 +219,41 @@ const reservationCleanupTimer = setInterval(async () => {
   }
 }, 60 * 60 * 1000);
 reservationCleanupTimer.unref();
+
+// 毎日 8:00 JST に当日チェックイン・アウト通知を送信（1時間ごとにチェック）
+let lastDailyNotificationDate = '';
+const dailyNotificationTimer = setInterval(async () => {
+  const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+  if (nowJST.getHours() !== 8) return;
+  const ds = jstDateStr(nowJST);
+  if (lastDailyNotificationDate === ds) return;
+  lastDailyNotificationDate = ds;
+  await sendDailyCheckinNotification(ds);
+}, 60 * 60 * 1000);
+dailyNotificationTimer.unref();
+
+// 出発24時間前リマインダー：1時間ごとにチェック
+const departureReminderTimer = setInterval(maybeSendDepartureReminders, 60 * 60 * 1000);
+departureReminderTimer.unref();
+
+// 返却日リマインダー：1時間ごとにチェック（9時JST送信）
+maybeSendReturnReminders();
+const returnReminderTimer = setInterval(maybeSendReturnReminders, 60 * 60 * 1000);
+returnReminderTimer.unref();
+
+// バックアップ：24時間ごと（初回はサーバー起動完了後に実行）
+const backupTimer = setInterval(backupReservations, 24 * 60 * 60 * 1000);
+backupTimer.unref();
+
+// Renderスリープ対策：14分ごとに自己ping
+if (KEEP_ALIVE_URL) {
+  const kaTimer = setInterval(async () => {
+    try { await fetch(`${KEEP_ALIVE_URL}/x1/ping`, { signal: AbortSignal.timeout(5000) }); }
+    catch {}
+  }, 14 * 60 * 1000);
+  kaTimer.unref();
+  console.log(`[KEEP-ALIVE] 有効 — 14分ごとに自己ping: ${KEEP_ALIVE_URL}`);
+}
 
 // ======================================================
 //  ユーティリティ
@@ -445,27 +510,57 @@ async function sendReservationAutoReply(entry) {
 以下の内容でご予約が確定しました。
 
 ━━━━━━━━━━━━━━━━━━━━
-予約ID: ${entry.id}
-期間　: ${entry.start} 〜 ${entry.end}（${plan.nights}泊）
-プラン: ${plan.name}
-料金　: ¥${total.toLocaleString()}
-車両　: ${entry.vehicle}
+予約ID : ${entry.id}
+期間   : ${entry.start} 〜 ${entry.end}（${plan.nights}泊）
+プラン : ${plan.name}
+料金   : ¥${total.toLocaleString()}（決済済み）
+車両   : ${entry.vehicle}
 ━━━━━━━━━━━━━━━━━━━━
 
-【免許証について】
-ご乗車当日に運転免許証をご持参ください。
-ご不明な点はお気軽にお問い合わせください。
+【ご準備いただくもの】
+・運転免許証（ご出発時にご提示ください）
 
-88CAMPCAR
-${BASE_URL}
-担当：鈴木 / 080-8520-6929
-営業時間 9時〜18時（年中無休）`;
+${EMAIL_LOCATION}
+
+【ご出発の手順】
+1. 駐車場にて車両をご確認ください
+2. キーボックスの暗証番号：${KEY_BOX_CODE}
+3. キーボックスから鍵を取り出してご乗車ください
+4. ご出発前に車両各部の写真を必ず撮影してください（下記参照）
+
+【車両写真撮影のお願い】
+ご出発前・ご返却前の双方で、以下の箇所を撮影してください。
+・車両前後・左右の4面全体
+・既存の傷・へこみがある箇所（クローズアップ）
+・燃料計（メーター）
+※撮影データはトラブル時の証明になります。必ずご自身のスマートフォン等に保存してください。
+
+【返却の手順】
+1. 元の駐車スペースに駐車し、車両写真を撮影してください
+2. 鍵をキーボックスに戻し、施錠してください
+3. キーボックスの番号をランダムにずらしてお離れください
+
+${EMAIL_EMERGENCY_CONTACTS}
+
+【予約確認ページ（いつでも確認できます）】
+${BASE_URL}/booking.html?token=${entry.viewToken}
+
+【特定商取引法に基づく表記・キャンセルポリシー】
+${BASE_URL}/tokushoho.html
+
+ご不明な点はお気軽にお問い合わせください。
+良い旅を！
+
+${EMAIL_HR}
+${EMAIL_COMPANY_FOOTER}
+営業時間 9時〜18時（年中無休）
+${EMAIL_HR}`;
 
   try {
     const { error } = await resend.emails.send({
       from: `88CAMPCAR <${MAIL_FROM}>`,
       to: entry.email,
-      subject: `【88CAMPCAR】ご予約ありがとうございます (${entry.start}〜${entry.end})`,
+      subject: `【88CAMPCAR】ご予約ありがとうございます — ${entry.start} ご出発`,
       text
     });
     if (error) throw new Error(error.message);
@@ -473,6 +568,319 @@ ${BASE_URL}
   } catch (err) {
     console.error('[MAIL] 予約確認メール送信エラー:', err.message);
   }
+}
+
+/** 出発24時間前リマインダーメール（お客様宛て） */
+async function sendDepartureReminder(entry) {
+  if (!resend) return;
+  const plan = determinePlan(entry.start, entry.end);
+  const total = plan.pricePerDay * plan.nights;
+  const text = `${entry.name}様
+
+明日 ${entry.start} のご出発まであと1日です。
+出発に向けてご確認をお願いします。
+
+━━━━━━━━━━━━━━━━━━━━
+期間   : ${entry.start} 〜 ${entry.end}（${plan.nights}泊）
+プラン : ${plan.name}
+料金   : ¥${total.toLocaleString()}（決済済み）
+車両   : ${entry.vehicle}
+━━━━━━━━━━━━━━━━━━━━
+
+【出発前チェックリスト】
+□ 運転免許証をお持ちですか？
+□ キーボックス暗証番号を確認しましたか？→ ${KEY_BOX_CODE}
+□ 車両写真（出発前・返却前）を撮影する準備はできていますか？
+
+${EMAIL_LOCATION}
+
+【当日の手順（再掲）】
+1. 駐車場にて車両を確認
+2. キーボックス（暗証番号：${KEY_BOX_CODE}）から鍵を取り出してご乗車
+3. 出発前に車両4面・傷・燃料計を撮影
+4. 返却時も同様に撮影 → 鍵をキーボックスに戻して施錠
+
+${EMAIL_EMERGENCY_CONTACTS}
+
+良い旅を！
+
+${EMAIL_HR}
+${EMAIL_COMPANY_FOOTER}
+${EMAIL_HR}`;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: entry.email,
+      subject: `【88CAMPCAR】明日 ${entry.start} ご出発 — 最終確認`,
+      text
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[MAIL] 出発リマインダー送信完了 → ${entry.email}`);
+  } catch (err) {
+    console.error('[MAIL] 出発リマインダーエラー:', err.message);
+  }
+}
+
+/** 出発24時間前リマインダーを未送信の予約に送信（1時間ごとに実行） */
+async function maybeSendDepartureReminders() {
+  try {
+    const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    const tomorrow = new Date(nowJST);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = jstDateStr(tomorrow);
+
+    const list = await readReservations();
+    const targets = list.filter(r =>
+      r.start === tomorrowStr &&
+      r.status !== 'cancelled' &&
+      r.status !== 'pending_payment' &&
+      !r.reminderSentAt
+    );
+    if (!targets.length) return;
+
+    const sent = [];
+    for (const r of targets) {
+      try { await sendDepartureReminder(r); sent.push(r.id); }
+      catch (err) { console.error('[REMINDER] メール送信エラー:', err.message); }
+    }
+    if (!sent.length) return;
+    const sentSet = new Set(sent);
+    const now = new Date().toISOString();
+    for (const r of list) { if (sentSet.has(r.id)) r.reminderSentAt = now; }
+    await writeReservations(list);
+    console.log(`[REMINDER] 出発リマインダー送信: ${sent.length}件`);
+  } catch (err) {
+    console.error('[REMINDER] エラー:', err.message);
+  }
+}
+
+/** 当日チェックイン・チェックアウト通知メール（管理者宛て） */
+async function sendDailyCheckinNotification(dateStr) {
+  if (!resend || !ADMIN_EMAIL) return;
+  try {
+    const list = await readReservations();
+    const active = list.filter(r => r.status !== 'cancelled' && r.status !== 'pending_payment');
+    const checkIns  = active.filter(r => r.start === dateStr);
+    const checkOuts = active.filter(r => r.end   === dateStr);
+    if (!checkIns.length && !checkOuts.length) return;
+    const lines = [];
+    if (checkIns.length) {
+      lines.push(`■ 本日チェックイン (${checkIns.length}件)\n` +
+        checkIns.map(r => {
+          const p = determinePlan(r.start, r.end);
+          return `  ${r.name}様 / TEL: ${r.phone} / ${p.name}（${p.nights}泊）/ ¥${(p.pricePerDay * p.nights).toLocaleString()}`;
+        }).join('\n'));
+    }
+    if (checkOuts.length) {
+      lines.push(`■ 本日チェックアウト (${checkOuts.length}件)\n` +
+        checkOuts.map(r => `  ${r.name}様`).join('\n'));
+    }
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: ADMIN_EMAIL,
+      subject: `【88CAMPCAR】本日の予定 ${dateStr}`,
+      text: `本日 ${dateStr} の予定をお知らせします。\n\n${lines.join('\n\n')}\n\n管理画面: ${BASE_URL}/admin.html`
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[MAIL] 当日通知メール送信完了 → ${ADMIN_EMAIL}`);
+  } catch (err) {
+    console.error('[MAIL] 当日通知メールエラー:', err.message);
+  }
+}
+
+// ── 書き込みロック（同時リクエストによるレースコンディション防止） ──
+let _rwLocked = false;
+const _rwQueue = [];
+function withReservationLock(fn) {
+  const run = async (resolve, reject) => {
+    _rwLocked = true;
+    try { resolve(await fn()); }
+    catch (err) { reject(err); }
+    finally {
+      _rwLocked = false;
+      if (_rwQueue.length) _rwQueue.shift()();
+    }
+  };
+  if (!_rwLocked) return new Promise(run);
+  return new Promise((res, rej) => _rwQueue.push(() => run(res, rej)));
+}
+
+// ── 日程ブロック（整備・個人使用） ──
+const blocksFile = path.join(DATA_DIR, 'blocked-dates.json');
+
+async function readBlocks() {
+  try {
+    if (fs.existsSync(blocksFile))
+      return JSON.parse(await fs.promises.readFile(blocksFile, 'utf8') || '[]');
+  } catch { }
+  return [];
+}
+
+async function writeBlocks(list) {
+  const tmp = blocksFile + '.tmp';
+  await fs.promises.writeFile(tmp, JSON.stringify(list, null, 2), 'utf8');
+  await fs.promises.rename(tmp, blocksFile);
+}
+
+// ── 返却日リマインダーメール（お客様宛て） ──
+async function sendReturnReminderEmail(entry) {
+  if (!resend) return;
+  const text = `${entry.name}様
+
+本日 ${entry.end} はご返却日です。
+以下のチェックリストをご確認ください。
+
+【返却チェックリスト】
+□ 車内のお忘れ物はありませんか？
+□ 車両の写真を撮影しましたか？（4面・傷・燃料計）
+□ 鍵をキーボックスに返却しましたか？（暗証番号：${KEY_BOX_CODE}）
+□ キーボックスの番号をランダムにずらしましたか？
+
+${EMAIL_LOCATION}
+
+${EMAIL_OVERDUE_POLICY}
+
+${EMAIL_EMERGENCY_CONTACTS}
+
+ご利用ありがとうございました。
+またのご利用をお待ちしております！
+
+${EMAIL_HR}
+${EMAIL_COMPANY_FOOTER}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: entry.email,
+      subject: `【88CAMPCAR】本日返却日のご確認 — ${entry.end}`,
+      text
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[MAIL] 返却リマインダー送信完了 → ${entry.email}`);
+  } catch (err) { console.error('[MAIL] 返却リマインダーエラー:', err.message); }
+}
+
+async function maybeSendReturnReminders() {
+  try {
+    const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    if (nowJST.getHours() !== 9) return;
+    const ds = jstDateStr(nowJST);
+    const list = await readReservations();
+    const targets = list.filter(r =>
+      r.end === ds && r.status !== 'cancelled' && r.status !== 'pending_payment' && !r.returnReminderSentAt
+    );
+    if (!targets.length) return;
+    for (const r of targets) {
+      await sendReturnReminderEmail(r);
+      r.returnReminderSentAt = new Date().toISOString();
+    }
+    await writeReservations(list);
+    console.log(`[REMINDER] 返却リマインダー送信: ${targets.length}件`);
+  } catch (err) { console.error('[REMINDER] 返却リマインダーエラー:', err.message); }
+}
+
+// ── Stripe 返金ユーティリティ ──
+async function processStripeRefund(reservation, amountYen) {
+  if (!stripe) return { ok: false, error: 'Stripe未設定' };
+  try {
+    let piId = reservation.stripePaymentIntentId;
+    if (!piId && reservation.stripeSessionId) {
+      const s = await stripe.checkout.sessions.retrieve(reservation.stripeSessionId);
+      piId = s.payment_intent;
+    }
+    if (!piId) return { ok: false, error: 'PaymentIntentが見つかりません' };
+    const refund = await stripe.refunds.create({ payment_intent: piId, amount: amountYen });
+    return { ok: true, refundId: refund.id, amount: amountYen };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// ── キャンセル料計算（管理画面と同ポリシー） ──
+function calcCancelFee(reservation) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const [y, m, d] = reservation.start.split('-').map(Number);
+  const start = new Date(y, m - 1, d);
+  const daysUntil = Math.round((start - today) / MS_PER_DAY);
+  const p = determinePlan(reservation.start, reservation.end);
+  const total = reservation.paidAmount ?? p.pricePerDay * p.nights;
+  const pct = daysUntil >= 8 ? 0 : daysUntil >= 4 ? 30 : daysUntil >= 1 ? 50 : 100;
+  const fee    = Math.round(total * pct / 100);
+  const refund = total - fee;
+  return { total, fee, refund, pct, daysUntil };
+}
+
+// ── キャンセル通知メール（お客様宛て） ──
+async function sendCancellationEmail(entry, refundAmount, cancelFee, autoProcessed) {
+  if (!resend) return;
+  const p = determinePlan(entry.start, entry.end);
+  const total = entry.paidAmount ?? p.pricePerDay * p.nights;
+  const refundNote = refundAmount > 0
+    ? autoProcessed
+      ? `返金額　: ¥${refundAmount.toLocaleString()}（Stripe自動処理済み。反映まで数営業日）`
+      : `返金額　: ¥${refundAmount.toLocaleString()}（管理者より別途処理いたします）`
+    : `返金　　: なし（キャンセル料100%）`;
+  const text = `${entry.name}様
+
+ご予約のキャンセルを受け付けました。
+
+${EMAIL_HR}
+予約ID　: ${entry.id}
+期間　　: ${entry.start} 〜 ${entry.end}（${p.nights}泊）
+お支払い: ¥${total.toLocaleString()}
+キャンセル料: ¥${cancelFee.toLocaleString()}
+${refundNote}
+${EMAIL_HR}
+
+ご不明な点はお問い合わせください。
+
+${EMAIL_COMPANY_FOOTER}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: entry.email,
+      subject: `【88CAMPCAR】予約キャンセルのご確認 — ${entry.start}〜${entry.end}`,
+      text
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[MAIL] キャンセル通知送信完了 → ${entry.email}`);
+  } catch (err) { console.error('[MAIL] キャンセル通知エラー:', err.message); }
+}
+
+// ── 日程変更通知メール（お客様宛て） ──
+async function sendModificationEmail(entry, oldStart, oldEnd, diff, additionalUrl) {
+  if (!resend) return;
+  const p = determinePlan(entry.start, entry.end);
+  const newTotal = p.pricePerDay * p.nights;
+  const changeNote = diff < 0
+    ? `差額返金  : ¥${Math.abs(diff).toLocaleString()}（Stripe自動処理済み。反映まで数営業日）`
+    : diff > 0
+      ? `追加料金  : ¥${diff.toLocaleString()}\n追加決済URL: ${additionalUrl}\n※上記URLより追加分のお支払いをお願いします。`
+      : `料金変動  : なし`;
+  const text = `${entry.name}様
+
+ご予約の日程を変更しました。
+
+${EMAIL_HR}
+予約ID : ${entry.id}
+変更前  : ${oldStart} 〜 ${oldEnd}
+変更後  : ${entry.start} 〜 ${entry.end}（${p.nights}泊 / ¥${newTotal.toLocaleString()}）
+${changeNote}
+${EMAIL_HR}
+
+ご不明な点はお問い合わせください。
+
+${EMAIL_COMPANY_FOOTER}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: entry.email,
+      subject: `【88CAMPCAR】予約日程変更のご確認 — ${entry.start}〜${entry.end}`,
+      text
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[MAIL] 日程変更通知送信完了 → ${entry.email}`);
+  } catch (err) { console.error('[MAIL] 日程変更通知エラー:', err.message); }
 }
 
 // ======================================================
@@ -519,6 +927,28 @@ function writeAdminAudit(req, action, payload = {}) {
       }
     })
     .catch(() => {});
+}
+
+/** 日次バックアップ（当日分が存在しなければ作成、7世代保持） */
+async function backupReservations() {
+  try { await fs.promises.access(reservationsFile); } catch { return; }
+  const today = new Date().toISOString().slice(0, 10);
+  const backupFile = path.join(DATA_DIR, `reservations.backup.${today}.json`);
+  try { await fs.promises.access(backupFile); return; } catch { /* proceed */ }
+  try {
+    await fs.promises.copyFile(reservationsFile, backupFile);
+    console.log(`[BACKUP] バックアップ作成: reservations.backup.${today}.json`);
+    const dir = await fs.promises.readdir(DATA_DIR);
+    const old = dir
+      .filter(f => /^reservations\.backup\.\d{4}-\d{2}-\d{2}\.json$/.test(f))
+      .sort().reverse().slice(7);
+    for (const f of old) {
+      await fs.promises.unlink(path.join(DATA_DIR, f)).catch(() => {});
+      console.log(`[BACKUP] 古いバックアップ削除: ${f}`);
+    }
+  } catch (err) {
+    console.error('[BACKUP] バックアップエラー:', err.message);
+  }
 }
 
 /** 予約データを非同期で読み込み */
@@ -666,19 +1096,18 @@ app.post('/x1/mail-test', adminAuth, async (req, res) => {
 // 予約済み日付を返す（カレンダー表示用）
 app.get('/api/reservations/dates', async (req, res, next) => {
   try {
-    const list = (await readReservations()).filter(r => r.status !== 'cancelled');
+    const [list, blocks] = await Promise.all([readReservations(), readBlocks()]);
     const booked = new Set();
-    for (const r of list) {
-      const s = new Date(r.start);
-      const e = new Date(r.end);
-      for (let d = new Date(s); d < e; d.setDate(d.getDate() + 1)) {
+    for (const r of list.filter(r => r.status !== 'cancelled')) {
+      for (let d = new Date(r.start); d < new Date(r.end); d.setDate(d.getDate() + 1))
         booked.add(d.toISOString().slice(0, 10));
-      }
     }
-    res.json({ booked: [...booked] });
-  } catch (err) {
-    next(err);
-  }
+    for (const b of blocks) {
+      for (let d = new Date(b.start); d <= new Date(b.end); d.setDate(d.getDate() + 1))
+        booked.add(d.toISOString().slice(0, 10));
+    }
+    res.json({ booked: [...booked], blocked: blocks });
+  } catch (err) { next(err); }
 });
 
 // 予約情報を受け取りStripe Checkout Sessionを作成（免許証はご来店時確認）
@@ -708,28 +1137,34 @@ app.post('/api/checkout-with-reservation',
       if (new Date(start) < today)
         return res.status(400).json({ error: '過去の日付は指定できません' });
 
-      // 1時間以上経過した pending_payment は無効とみなす
-      const list = await readReservations();
-      const oneHourAgo = Date.now() - 60 * 60 * 1000;
-      const activeList = list.filter(r =>
-        r.status !== 'pending_payment' || new Date(r.createdAt).getTime() > oneHourAgo
-      );
-      if (hasConflict(start, end, null, activeList))
-        return res.status(409).json({ error: 'ご指定の日程は既に予約済みです。別の日程をお選びください。' });
-
+      // ロック内で競合チェック＋仮予約書き込み
       const plan = determinePlan(start, end);
       const priceId = STRIPE_PRICE_IDS[plan.planKey];
-
-      // 仮予約を保存（status: pending_payment）
-      const entry = {
-        id: generateId(),
-        name, email, phone, start, end,
-        vehicle: 'スーパーロングハイエース',
-        status: 'pending_payment',
-        createdAt: new Date().toISOString()
-      };
-      list.push(entry);
-      await writeReservations(list);
+      let entry;
+      try {
+        entry = await withReservationLock(async () => {
+          const list = await readReservations();
+          const oneHourAgo = Date.now() - 60 * 60 * 1000;
+          const activeList = list.filter(r =>
+            r.status !== 'pending_payment' || new Date(r.createdAt).getTime() > oneHourAgo
+          );
+          // ブロック日程との重複チェック
+          const blocks = await readBlocks();
+          for (const b of blocks) {
+            const bs = new Date(b.start).getTime(), be = new Date(b.end).getTime() + 86400000;
+            if (new Date(start).getTime() < be && new Date(end).getTime() > bs)
+              throw Object.assign(new Error('ご指定の日程はご利用いただけません。別の日程をお選びください。'), { status: 409 });
+          }
+          if (hasConflict(start, end, null, activeList))
+            throw Object.assign(new Error('ご指定の日程は既に予約済みです。別の日程をお選びください。'), { status: 409 });
+          const e = { id: generateId(), name, email, phone, start, end, vehicle: 'スーパーロングハイエース', status: 'pending_payment', createdAt: new Date().toISOString() };
+          list.push(e);
+          await writeReservations(list);
+          return e;
+        });
+      } catch (lockErr) {
+        return res.status(lockErr.status || 500).json({ error: lockErr.message });
+      }
 
       // Stripe Checkout Session 作成
       const session = await stripe.checkout.sessions.create({
@@ -773,6 +1208,10 @@ app.get('/api/confirm-payment', async (req, res, next) => {
 
     list[idx].status = 'pending';
     list[idx].stripeSessionId = session_id;
+    list[idx].stripePaymentIntentId = session.payment_intent || null;
+    const _cp = determinePlan(list[idx].start, list[idx].end);
+    list[idx].paidAmount = _cp.pricePerDay * _cp.nights;
+    list[idx].viewToken = list[idx].viewToken || crypto.randomBytes(24).toString('hex');
     list[idx].updatedAt = new Date().toISOString();
     await writeReservations(list);
 
@@ -992,36 +1431,133 @@ app.get(['/api/admin/csrf', '/_/admin/csrf', '/x1/r/csrf'], adminAuth, (req, res
   return res.status(400).json({ error: 'CSRFトークンを発行できません。再ログインしてください。' });
 });
 
-// 全予約取得
+// 全予約取得（viewToken未生成の既存予約を自動補完）
 app.get(['/api/admin/reservations', '/_/admin/reservations', '/x1/r/list'], adminAuth, async (req, res, next) => {
   try {
-    const list = (await readReservations()).sort((a, b) =>
-      new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    res.json(list);
+    const list = await readReservations();
+    let needsSave = false;
+    for (const r of list) {
+      if (!r.viewToken && r.status !== 'pending_payment') {
+        r.viewToken = crypto.randomBytes(24).toString('hex');
+        needsSave = true;
+      }
+    }
+    if (needsSave) await writeReservations(list);
+    res.json(list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
   } catch (err) {
     next(err);
   }
 });
 
-// 予約ステータス更新
+// 予約ステータス更新（autoRefund: true でキャンセル時にStripe返金を自動実行）
 app.patch(['/api/admin/reservations/:id', '/_/admin/reservations/:id', '/x1/r/item/:id'], adminAuth, requireAdminCsrf, async (req, res, next) => {
   try {
-    const { status } = req.body;
-    if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
-      return res.status(400).json({ error: '無効なステータス' });
-    }
+    const { status, autoRefund, note } = req.body;
     const list = await readReservations();
     const idx = list.findIndex(r => r.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: '予約が見つかりません' });
+
+    // メモのみ更新
+    if (note !== undefined && !status) {
+      list[idx].note = typeof note === 'string' ? note.trim().slice(0, 1000) : '';
+      list[idx].updatedAt = new Date().toISOString();
+      await writeReservations(list);
+      return res.json({ ok: true });
+    }
+
+    if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: '無効なステータス' });
+    }
+
+    if (status === 'cancelled') {
+      const cf = calcCancelFee(list[idx]);
+      if (autoRefund && cf.refund > 0) {
+        const result = await processStripeRefund(list[idx], cf.refund);
+        if (!result.ok) return res.status(502).json({ error: `Stripe返金失敗: ${result.error}` });
+        list[idx].stripeRefundId = result.refundId;
+        list[idx].stripeRefundAmount = cf.refund;
+      }
+      list[idx].status = 'cancelled';
+      list[idx].updatedAt = new Date().toISOString();
+      await writeReservations(list);
+      writeAdminAudit(req, 'reservation_cancelled', { reservationId: req.params.id, autoRefund: !!autoRefund, refundAmount: autoRefund ? cf.refund : 0 });
+      sendCancellationEmail(list[idx], cf.refund, cf.fee, !!autoRefund).catch(console.error);
+      return res.json({ ok: true, reservation: list[idx], refundAmount: autoRefund ? cf.refund : 0 });
+    }
+
     list[idx].status = status;
     list[idx].updatedAt = new Date().toISOString();
     await writeReservations(list);
-    writeAdminAudit(req, 'reservation_status_changed', {
-      reservationId: req.params.id,
-      status
-    });
+    writeAdminAudit(req, 'reservation_status_changed', { reservationId: req.params.id, status });
     res.json({ ok: true, reservation: list[idx] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 予約日程変更（差額を自動返金 or 追加決済リンクを生成）
+app.patch(['/x1/r/item/:id/dates'], adminAuth, requireAdminCsrf, async (req, res, next) => {
+  try {
+    const { start: newStart, end: newEnd } = req.body;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newStart) || !/^\d{4}-\d{2}-\d{2}$/.test(newEnd))
+      return res.status(400).json({ error: '日付形式が不正です' });
+    if (new Date(newStart) >= new Date(newEnd))
+      return res.status(400).json({ error: '終了日は開始日の翌日以降にしてください' });
+
+    const list = await readReservations();
+    const idx = list.findIndex(r => r.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: '予約が見つかりません' });
+    const r = list[idx];
+    if (r.status === 'cancelled') return res.status(400).json({ error: 'キャンセル済みの予約は変更できません' });
+
+    if (hasConflict(newStart, newEnd, r.id, list))
+      return res.status(409).json({ error: '指定の日程は他の予約と重複しています' });
+
+    const oldStart = r.start, oldEnd = r.end;
+    const paidAmount = r.paidAmount ?? (determinePlan(r.start, r.end).pricePerDay * determinePlan(r.start, r.end).nights);
+    const newPlan = determinePlan(newStart, newEnd);
+    const newTotal = newPlan.pricePerDay * newPlan.nights;
+    const diff = newTotal - paidAmount;
+
+    let additionalUrl = null;
+
+    if (diff < 0) {
+      const result = await processStripeRefund(r, Math.abs(diff));
+      if (!result.ok) return res.status(502).json({ error: `Stripe返金失敗: ${result.error}` });
+      list[idx].stripeRefundId = result.refundId;
+      list[idx].stripeRefundAmount = (r.stripeRefundAmount || 0) + Math.abs(diff);
+      list[idx].paidAmount = newTotal;
+    } else if (diff > 0) {
+      if (!stripe) return res.status(503).json({ error: 'Stripe未設定' });
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'jpy',
+            product_data: { name: `88CAMPCAR 追加料金（${newStart}〜${newEnd}）` },
+            unit_amount: diff,
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        customer_email: r.email,
+        metadata: { reservationId: r.id, type: 'modification' },
+        success_url: `${BASE_URL}/admin.html`,
+        cancel_url:  `${BASE_URL}/admin.html`,
+      });
+      additionalUrl = session.url;
+      list[idx].pendingAdditionalAmount = diff;
+      list[idx].pendingAdditionalUrl = additionalUrl;
+    }
+
+    list[idx].start = newStart;
+    list[idx].end = newEnd;
+    list[idx].updatedAt = new Date().toISOString();
+    await writeReservations(list);
+    writeAdminAudit(req, 'reservation_dates_modified', { reservationId: r.id, oldStart, oldEnd, newStart, newEnd, diff });
+    sendModificationEmail(list[idx], oldStart, oldEnd, diff, additionalUrl).catch(console.error);
+
+    res.json({ ok: true, diff, additionalUrl });
   } catch (err) {
     next(err);
   }
@@ -1051,6 +1587,62 @@ app.delete(['/api/admin/reservations/:id', '/_/admin/reservations/:id', '/x1/r/i
   } catch (err) {
     next(err);
   }
+});
+
+// ── ブロック一覧（管理者） ──
+app.get('/x1/r/blocks', adminAuth, async (req, res, next) => {
+  try { res.json(await readBlocks()); }
+  catch (err) { next(err); }
+});
+
+// ── ブロック追加（管理者） ──
+app.post('/x1/r/blocks', adminAuth, requireAdminCsrf, async (req, res, next) => {
+  try {
+    const start  = sanitize(req.body?.start  || '');
+    const end    = sanitize(req.body?.end    || '');
+    const reason = sanitize(req.body?.reason || '').slice(0, 100);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end))
+      return res.status(400).json({ error: '日付が不正です' });
+    if (start > end) return res.status(400).json({ error: '終了日は開始日以降にしてください' });
+    const block = { id: generateId(), start, end, reason, createdAt: new Date().toISOString() };
+    const list = await readBlocks();
+    list.push(block);
+    await writeBlocks(list);
+    writeAdminAudit(req, 'block_added', { start, end, reason });
+    res.json({ ok: true, block });
+  } catch (err) { next(err); }
+});
+
+// ── ブロック削除（管理者） ──
+app.delete('/x1/r/blocks/:id', adminAuth, requireAdminCsrf, async (req, res, next) => {
+  try {
+    let list = await readBlocks();
+    if (!list.find(b => b.id === req.params.id))
+      return res.status(404).json({ error: 'ブロックが見つかりません' });
+    await writeBlocks(list.filter(b => b.id !== req.params.id));
+    writeAdminAudit(req, 'block_deleted', { id: req.params.id });
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// ── お客様予約確認（viewToken認証） ──
+app.get('/api/booking/:token', async (req, res, next) => {
+  try {
+    const token = req.params.token;
+    if (!token || typeof token !== 'string' || token.length < 48)
+      return res.status(400).json({ error: '無効なトークンです' });
+    const list = await readReservations();
+    const r = list.find(x => x.viewToken === token);
+    if (!r) return res.status(404).json({ error: '予約が見つかりません' });
+    const p = determinePlan(r.start, r.end);
+    const active = r.status === 'pending' || r.status === 'confirmed';
+    res.json({
+      id: r.id, name: r.name, start: r.start, end: r.end,
+      planName: p.name, nights: p.nights, total: p.pricePerDay * p.nights,
+      status: r.status, vehicle: r.vehicle,
+      keyBox: active ? KEY_BOX_CODE : null,
+    });
+  } catch (err) { next(err); }
 });
 
 // ======================================================
@@ -1090,6 +1682,11 @@ const server = app.listen({ port: PORT, host: '::', ipv6Only: false }, () => {
   for (const ip of lanIps) {
     console.log(`[SERVER] LAN:     http://${ip}:${PORT}/admin.html`);
   }
+  // 起動完了後に初回実行（リッスン開始をブロックしない）
+  setImmediate(() => {
+    maybeSendDepartureReminders();
+    backupReservations();
+  });
 });
 
 function gracefulShutdown(signal) {
@@ -1097,6 +1694,10 @@ function gracefulShutdown(signal) {
   server.close(() => {
     clearInterval(cleanupTimer);
     clearInterval(reservationCleanupTimer);
+    clearInterval(dailyNotificationTimer);
+    clearInterval(departureReminderTimer);
+    clearInterval(returnReminderTimer);
+    clearInterval(backupTimer);
     console.log('[SERVER] 正常終了');
     process.exit(0);
   });

@@ -8,18 +8,39 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATA_DIR
+        value: /opt/render/project/src/storage
+      # 管理画面
       - key: ADMIN_PASS_HASH
         sync: false
       - key: ADMIN_EMAIL
         sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
       - key: BASE_URL
         sync: false
-      - key: DATA_DIR
-        value: /opt/render/project/src/storage
+      # メール送信（Resend）
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # 車両・連絡先
+      - key: KEY_BOX_CODE
+        sync: false
+      - key: INSURANCE_TEL
+        sync: false
+      # Stripe 決済
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_SHORT
+        sync: false
+      - key: STRIPE_PRICE_MEDIUM
+        sync: false
+      - key: STRIPE_PRICE_WEEKLY
+        sync: false
+      # 稼働維持（任意）
+      - key: KEEP_ALIVE_URL
+        sync: false
     disk:
       name: uploads
       mountPath: /opt/render/project/src/storage
