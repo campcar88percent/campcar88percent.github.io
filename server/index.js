@@ -61,6 +61,18 @@ function jstDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+/** 現在のJST日付（YYYY-MM-DD） */
+function todayJST() {
+  return jstDateStr(new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })));
+}
+
+/** キーボックス暗証番号の開示日（出発前日 = start の1日前）を YYYY-MM-DD で返す */
+function keyBoxRevealDate(startStr) {
+  const d = new Date(startStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  return jstDateStr(d);
+}
+
 if (!ADMIN_PASS_HASH) {
   console.error('⛔ ADMIN_PASS_HASH が未設定です。ハッシュ必須モードのためサーバーを起動できません。');
   process.exit(1);
@@ -524,9 +536,13 @@ ${EMAIL_LOCATION}
 
 【ご出発の手順】
 1. 駐車場にて車両をご確認ください
-2. キーボックスの暗証番号：${KEY_BOX_CODE}
-3. キーボックスから鍵を取り出してご乗車ください
-4. ご出発前に車両各部の写真を必ず撮影してください（下記参照）
+2. キーボックスの暗証番号を入力し、鍵を取り出してご乗車ください
+3. ご出発前に車両各部の写真を必ず撮影してください（下記参照）
+
+【キーボックス暗証番号について】
+防犯のため、暗証番号はご出発の前日にお知らせします。
+前日に「出発前日リマインダーメール」、または下記の予約確認ページでご確認いただけます。
+予約確認ページ：${BASE_URL}/booking.html?token=${entry.viewToken}
 
 【車両写真撮影のお願い】
 ご出発前・ご返却前の双方で、以下の箇所を撮影してください。
@@ -1636,11 +1652,16 @@ app.get('/api/booking/:token', async (req, res, next) => {
     if (!r) return res.status(404).json({ error: '予約が見つかりません' });
     const p = determinePlan(r.start, r.end);
     const active = r.status === 'pending' || r.status === 'confirmed';
+    // 暗証番号は防犯のため「出発前日〜返却日」のみ開示する
+    const revealFrom = keyBoxRevealDate(r.start);
+    const today = todayJST();
+    const keyBoxRevealed = active && today >= revealFrom && today <= r.end;
     res.json({
       id: r.id, name: r.name, start: r.start, end: r.end,
       planName: p.name, nights: p.nights, total: p.pricePerDay * p.nights,
       status: r.status, vehicle: r.vehicle,
-      keyBox: active ? KEY_BOX_CODE : null,
+      keyBox: keyBoxRevealed ? KEY_BOX_CODE : null,
+      keyBoxRevealDate: (active && !keyBoxRevealed && today < revealFrom) ? revealFrom : null,
     });
   } catch (err) { next(err); }
 });

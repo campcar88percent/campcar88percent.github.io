@@ -98,7 +98,7 @@
       </div>
     </div>
 
-    ${active && data.keyBox ? `
+    ${data.keyBox ? `
     <div class="keybox-card">
       <div class="keybox-label">キーボックス暗証番号</div>
       <div class="keybox-code">${data.keyBox}</div>
@@ -108,7 +108,15 @@
         <li>出発前に車両写真を撮影（4面・傷・燃料計）</li>
         <li>返却後は鍵を戻し、番号をランダムにずらす</li>
       </ul>
-    </div>` : ''}
+    </div>` : (data.keyBoxRevealDate ? `
+    <div class="keybox-card">
+      <div class="keybox-label">キーボックス暗証番号</div>
+      <div style="font-size:16px;font-weight:800;color:#f97316;line-height:1.5;">防犯のため、${fmtD(data.keyBoxRevealDate)}（出発前日）に表示されます</div>
+      <ul class="keybox-steps">
+        <li>出発前日になると、このページに暗証番号が表示されます</li>
+        <li>前日の「出発前日リマインダーメール」にも記載されます</li>
+      </ul>
+    </div>` : '')}
 
     ${active ? `
     <div class="info-card">
