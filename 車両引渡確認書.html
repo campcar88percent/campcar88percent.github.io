@@ -91,9 +91,9 @@
   <span>88<b>CAMPCAR</b> — 車両引渡確認書・備品チェックリスト</span>
   <span>
     <button onclick="printOnly('booking')">🖨 予約ごとに印刷（1〜2枚目）</button>
-    <button onclick="printOnly('laminate')">🖨 ラミネート用（3枚目）</button>
+    <button onclick="printOnly('laminate')">🖨 ラミネート用（3枚目 表裏）</button>
   </span>
-  <span class="hint">予約ごとは1〜2枚目を印刷。3枚目は1回だけ印刷してラミネートし車内常備。</span>
+  <span class="hint">予約ごとは1〜2枚目を印刷。3枚目（表＝事故対応／裏＝車中泊ガイド）は1回だけ両面印刷し、ラミネートして車内常備。</span>
 </div>
 
 <!-- ───────── Page 1: 車両引渡確認書 ───────── -->
@@ -277,22 +277,72 @@
 
   <div class="emg-grid">
     <div class="emg-card"><div class="t">担当（鈴木）9〜18時</div><div class="n">080-8520-6929</div></div>
-    <div class="emg-card"><div class="t">JAF ロードサービス 24時間</div><div class="n">#8139</div></div>
     <div class="emg-card"><div class="t">警察</div><div class="n">110</div></div>
+    <div class="emg-card"><div class="t">大同火災 事故受付センター</div><div class="n">0120-091-161</div></div>
     <div class="emg-card"><div class="t">消防・救急</div><div class="n">119</div></div>
-    <div class="emg-card" style="grid-column:1 / span 2;"><div class="t">保険ロードサービス（任意保険）</div><div class="n fill">　　　　　　　　　　　　　　　　</div></div>
+    <div class="emg-card"><div class="t">大同火災 ロードサービス（故障）</div><div class="n">0120-024-090</div></div>
+    <div class="emg-card"><div class="t">JAF（バックアップ）24時間</div><div class="n">#8139</div></div>
   </div>
 
-  <div class="sec-title">車両について</div>
+  <p style="font-size:10.5px;margin-top:8px;"><b>故障・パンク・バッテリー上がり・鍵の閉じ込み・ガス欠など</b>は、まず<b>担当（鈴木）</b>へご連絡ください。保険付帯の<b>大同火災 ロードサービス（0120-024-090）</b>で対応します（基本無料）。JAFは会員の場合のバックアップです。</p>
+
+  <div class="sec-title">この車両・保険の情報（事故時に警察・保険会社へ提示）</div>
   <table class="kv">
-    <tr><th>給油</th><td>ガソリン満タン返しでお願いします（レギュラー）。</td></tr>
-    <tr><th>設備</th><td>車内にトイレ・シャワーはありません。道の駅・温泉・コインシャワー等をご利用ください。</td></tr>
-    <tr><th>返却場所</th><td>〒905-0009 沖縄県名護市宇茂佐の森2丁目1-9（貸出と同じ場所）</td></tr>
-    <tr><th>返却時</th><td>元の駐車スペースへ → 車両4面・傷・燃料計を撮影 → 鍵をキーボックスへ戻し施錠 → ダイヤルをずらす</td></tr>
-    <tr><th>返却遅延</th><td>契約日時を過ぎた場合、超過1日ごとに通常日額（¥26,000／日）を申し受けます。遅れる場合は必ず事前にご連絡ください。</td></tr>
+    <tr><th>車種</th><td>スーパーロングハイエース（キャンピング仕様）</td></tr>
+    <tr><th>ナンバー</th><td>沖縄 830 わ 88</td></tr>
+    <tr><th>任意保険</th><td>大同火災海上保険株式会社</td></tr>
+    <tr><th>貸出・返却場所</th><td>〒905-0009 沖縄県名護市宇茂佐の森2丁目1-9（貸出と同じ場所）</td></tr>
+  </table>
+  <p style="font-size:10px;margin-top:6px;">※給油・返却の手順や車中泊のマナーは<b>裏面「車中泊ガイド」</b>をご覧ください。</p>
+
+  <div class="foot"><span>88CAMPCAR 事故・緊急時対応カード</span><span>ラミネート用・表面</span></div>
+</div>
+
+<!-- ───────── Page 3 裏: 車中泊ガイド（ラミネート裏面・車内常備） ───────── -->
+<div class="page laminate">
+  <div class="doc-head">
+    <div>
+      <div class="logo">88<span>CAMPCAR</span></div>
+      <div class="doc-title">車中泊ガイド & お願い</div>
+    </div>
+    <div class="doc-sub">ラミネート裏面 ／ 車内常備<br>はじめての沖縄バンライフを快適に</div>
+  </div>
+
+  <div class="sec-title">車内で守っていただくこと</div>
+  <table class="kv">
+    <tr><th>車内</th><td><b>禁煙・ペット不可・土足厳禁</b>（汚損時はクリーニング代を申し受けます）</td></tr>
+    <tr><th>車中泊</th><td>道の駅・サービスエリア等での<b>仮眠はOK</b>ですが、テーブル・火器・洗濯物など<b>キャンプ行為は禁止</b>です。</td></tr>
+    <tr><th>夜間</th><td>就寝時は<b>エンジン停止</b>。アイドリング音・話し声など周囲へご配慮ください。</td></tr>
+    <tr><th>ゴミ</th><td>ゴミは<b>お持ち帰り</b>ください（施設のゴミ箱への廃棄はご遠慮ください）。</td></tr>
   </table>
 
-  <div class="foot"><span>88CAMPCAR 事故・緊急時対応カード</span><span>ラミネート用・車内常備</span></div>
+  <div class="sec-title">設備の使い方・安全</div>
+  <table class="check-table">
+    <tr><td class="item"><span class="check-box"></span>　カセットコンロ使用中は<b>必ず換気</b>。就寝前・離席前は<b>消火を確認</b></td></tr>
+    <tr><td class="item"><span class="check-box"></span>　サブバッテリー／外部電源の詳しい操作は<b>車内の説明書</b>をご確認ください</td></tr>
+    <tr><td class="item"><span class="check-box"></span>　電気の使いすぎにご注意ください（走行中にサブバッテリーへ充電されます）</td></tr>
+  </table>
+
+  <div class="sec-title">トイレ・シャワーは車内にありません</div>
+  <div class="note">道の駅・公衆トイレ・コインシャワー・温泉／銭湯をご利用ください。場所は公式サイト（88campcar.com）のマップでご確認いただけます。</div>
+
+  <div class="sec-title">沖縄ドライブ・駐車の注意</div>
+  <table class="kv">
+    <tr><th>車高</th><td><b>立体駐車場・ゲート式駐車場は高さ制限で入れません。</b>平面駐車場をご利用ください。</td></tr>
+    <tr><th>運転</th><td>道が狭く流れもゆっくりです。スコール時は視界不良に、<b>台風接近時は運行・気象情報に</b>ご注意ください。</td></tr>
+    <tr><th>潮風</th><td>海沿いは塩害があります。駐停車時は<b>窓を閉めて</b>ください。</td></tr>
+  </table>
+
+  <div class="sec-title">返却前セルフチェック</div>
+  <table class="check-table">
+    <tr><td class="item"><span class="check-box"></span>　ガソリン満タン ／ 車内の砂・ゴミを払う</td></tr>
+    <tr><td class="item"><span class="check-box"></span>　外装4面・傷・燃料計を撮影 ／ 忘れ物の確認</td></tr>
+    <tr><td class="item"><span class="check-box"></span>　鍵をキーボックスへ戻し施錠 → ダイヤルをずらす</td></tr>
+  </table>
+
+  <div class="note" style="margin-top:10px;"><b>困ったときは：</b>担当（鈴木）080-8520-6929（9〜18時）／ くわしくは 88campcar.com の「よくある質問」をご覧ください。</div>
+
+  <div class="foot"><span>88CAMPCAR 車中泊ガイド</span><span>ラミネート用・裏面</span></div>
 </div>
 
 <script>
