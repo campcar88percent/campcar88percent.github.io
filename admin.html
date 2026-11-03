@@ -358,6 +358,36 @@
   </div>
 </div>
 
+<!-- 保証金請求モーダル -->
+<div class="modal-overlay" id="deposit-modal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">保証金から請求</div></div>
+    <div class="modal-body">
+      <div class="modal-name" id="deposit-modal-name"></div>
+      <div class="modal-dates" id="deposit-modal-remaining"></div>
+      <div class="modify-field" style="margin-top:14px;">
+        <label class="modify-label" for="deposit-reason">請求理由</label>
+        <input class="modify-input" id="deposit-reason" list="deposit-reasons" placeholder="クリーニング代 など" />
+        <datalist id="deposit-reasons">
+          <option value="クリーニング代"></option>
+          <option value="返却遅延（超過料金）"></option>
+          <option value="車両の損傷"></option>
+          <option value="燃料（給油不足）"></option>
+        </datalist>
+      </div>
+      <div class="modify-field" style="margin-top:10px;">
+        <label class="modify-label" for="deposit-amount">請求額（円）</label>
+        <input class="modify-input" type="number" id="deposit-amount" min="1" step="1" placeholder="例: 5000" />
+      </div>
+      <p class="fee-note" id="deposit-note" style="margin-top:10px;">保存済みのカードに直接請求します（お客様の操作は不要）。失敗した場合は決済リンク等でご対応ください。</p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-back" onclick="closeDepositModal()">戻る</button>
+      <button class="modal-btn" id="deposit-modal-exec" style="background:#059669;color:#fff;" onclick="submitDepositCharge()">請求する</button>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt="拡大" /></div>
 
@@ -779,6 +809,7 @@ function render() {
             ${r.status !== 'confirmed' ? `<button class="action-btn btn-confirm" onclick="act('${r.id}','confirmed')">✓ 確定</button>` : ''}
             ${r.status !== 'cancelled' ? `<button class="action-btn btn-cancel"  onclick="showCancelModal('${r.id}')">✗ キャンセル</button>` : ''}
             ${r.status !== 'cancelled' ? `<button class="action-btn btn-pending" style="border-color:#6366f1;color:#6366f1;" onclick="showModifyModal('${r.id}')">📅 日程変更</button>` : ''}
+            ${r.status !== 'cancelled' && r.stripeCustomerId ? `<button class="action-btn btn-pending" style="border-color:#059669;color:#059669;" onclick="showDepositModal('${r.id}')">💳 保証金請求</button>` : ''}
             ${r.status !== 'pending'   ? `<button class="action-btn btn-pending" onclick="act('${r.id}','pending')">↩ 受付中に戻す</button>` : ''}
             <button class="action-btn btn-delete" onclick="del('${r.id}','${esc(r.name)}')">🗑 削除</button>
           </div>
@@ -963,6 +994,62 @@ async function submitModify() {
 
 $('modify-modal').addEventListener('click', e => {
   if (e.target === $('modify-modal')) closeModifyModal();
+});
+
+// ── Deposit (保証金) Modal ──
+let depositTargetId = null;
+const DEPOSIT_CAP_YEN = 30000;
+
+function showDepositModal(id) {
+  const r = reservations.find(x => x.id === id);
+  if (!r) return;
+  depositTargetId = id;
+  const already = (r.depositCharges || []).reduce((s, c) => s + (c.amount || 0), 0);
+  const remaining = DEPOSIT_CAP_YEN - already;
+  $('deposit-modal-name').textContent = `${r.name} 様`;
+  $('deposit-modal-remaining').innerHTML = `保証金上限 ¥${DEPOSIT_CAP_YEN.toLocaleString()} ／ 請求済み ¥${already.toLocaleString()} ／ <strong>残り ¥${remaining.toLocaleString()}</strong>`;
+  $('deposit-reason').value = '';
+  $('deposit-amount').value = '';
+  $('deposit-amount').max = remaining;
+  $('deposit-modal').classList.add('show');
+}
+
+function closeDepositModal() {
+  $('deposit-modal').classList.remove('show');
+  depositTargetId = null;
+}
+
+async function submitDepositCharge() {
+  if (!depositTargetId) return;
+  const reason = $('deposit-reason').value.trim();
+  const amount = Math.round(Number($('deposit-amount').value));
+  if (!reason) { toast('請求理由を入力してください', true); return; }
+  if (!Number.isInteger(amount) || amount <= 0) { toast('金額を正しく入力してください', true); return; }
+  if (!confirm(`${reason} として ¥${amount.toLocaleString()} をカードに請求します。よろしいですか？`)) return;
+  const id = depositTargetId;
+  const execBtn = $('deposit-modal-exec');
+  execBtn.disabled = true;
+  try {
+    const r = await apiFetch(`${adminApiPrefix}/item/${id}/charge-deposit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ amount, reason })
+    });
+    if (r.status === 403) { await fetchCsrfToken(); throw new Error('再ログイン後に再試行してください'); }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || '請求に失敗しました');
+    toast(`保証金請求 — ¥${data.amount.toLocaleString()} 請求完了（残り ¥${data.remaining.toLocaleString()}）`);
+    closeDepositModal();
+    load();
+  } catch (err) {
+    toast(err.message || '請求に失敗しました', true);
+  } finally {
+    execBtn.disabled = false;
+  }
+}
+
+$('deposit-modal').addEventListener('click', e => {
+  if (e.target === $('deposit-modal')) closeDepositModal();
 });
 
 // ── Lightbox ──

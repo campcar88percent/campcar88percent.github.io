@@ -37,6 +37,7 @@ const stripe = STRIPE_SECRET_KEY ? Stripe(STRIPE_SECRET_KEY) : null;
 const KEY_BOX_CODE   = process.env.KEY_BOX_CODE   || '（管理者にお問い合わせください）';
 const INSURANCE_TEL  = process.env.INSURANCE_TEL  || '（管理者にお問い合わせください）';
 const KEEP_ALIVE_URL = process.env.KEEP_ALIVE_URL || '';
+const DEPOSIT_CAP    = Number(process.env.DEPOSIT_CAP) || 30000; // 保証金の請求上限（円）
 
 // メール共通ブロック（定数はモジュールトップで確定）
 const EMAIL_EMERGENCY_CONTACTS = `【緊急連絡先】
@@ -71,6 +72,25 @@ function keyBoxRevealDate(startStr) {
   const d = new Date(startStr + 'T00:00:00');
   d.setDate(d.getDate() - 1);
   return jstDateStr(d);
+}
+
+/** Checkout セッションから Stripe の顧客ID・支払い方法IDを取得（保証金の事後請求用） */
+async function getStripePaymentRefs(session) {
+  const customerId = typeof session.customer === 'string'
+    ? session.customer
+    : (session.customer && session.customer.id) || null;
+  const piRef = session.payment_intent;
+  const piId = typeof piRef === 'string' ? piRef : (piRef && piRef.id) || null;
+  let paymentMethodId = null;
+  if (stripe && piId) {
+    try {
+      const pi = await stripe.paymentIntents.retrieve(piId);
+      paymentMethodId = typeof pi.payment_method === 'string'
+        ? pi.payment_method
+        : (pi.payment_method && pi.payment_method.id) || null;
+    } catch (e) { console.error('[STRIPE] 支払い方法の取得に失敗:', e.message); }
+  }
+  return { customerId, paymentMethodId };
 }
 
 if (!ADMIN_PASS_HASH) {
@@ -146,6 +166,9 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
         list[idx].status = 'pending';
         list[idx].stripeSessionId = session.id;
         list[idx].stripePaymentIntentId = session.payment_intent || null;
+        const _refs = await getStripePaymentRefs(session);
+        list[idx].stripeCustomerId = _refs.customerId;
+        list[idx].stripePaymentMethodId = _refs.paymentMethodId;
         const _wp = determinePlan(list[idx].start, list[idx].end);
         list[idx].paidAmount = _wp.pricePerDay * _wp.nights;
         list[idx].viewToken = list[idx].viewToken || crypto.randomBytes(24).toString('hex');
@@ -1188,6 +1211,9 @@ app.post('/api/checkout-with-reservation',
         line_items: [{ price: priceId, quantity: plan.nights }],
         mode: 'payment',
         customer_email: email,
+        // 保証金（クリーニング・超過・損傷）の事後請求に備え、カードを保存する
+        customer_creation: 'always',
+        payment_intent_data: { setup_future_usage: 'off_session' },
         metadata: { reservationId: entry.id },
         success_url: `${BASE_URL}/?booking=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:  `${BASE_URL}/?booking=cancelled&rid=${entry.id}`,
@@ -1225,6 +1251,9 @@ app.get('/api/confirm-payment', async (req, res, next) => {
     list[idx].status = 'pending';
     list[idx].stripeSessionId = session_id;
     list[idx].stripePaymentIntentId = session.payment_intent || null;
+    const _crefs = await getStripePaymentRefs(session);
+    list[idx].stripeCustomerId = _crefs.customerId;
+    list[idx].stripePaymentMethodId = _crefs.paymentMethodId;
     const _cp = determinePlan(list[idx].start, list[idx].end);
     list[idx].paidAmount = _cp.pricePerDay * _cp.nights;
     list[idx].viewToken = list[idx].viewToken || crypto.randomBytes(24).toString('hex');
@@ -1580,6 +1609,91 @@ app.patch(['/x1/r/item/:id/dates'], adminAuth, requireAdminCsrf, async (req, res
 });
 
 // 予約削除
+/** 保証金請求のレシートメール（お客様宛て） */
+async function sendDepositChargeEmail(entry, amount, reason) {
+  if (!resend) return;
+  const text = `${entry.name}様
+
+ご利用いただきありがとうございました。
+ご返却後の精算として、保証金より下記のとおりご請求（カード決済）いたしました。
+
+━━━━━━━━━━━━━━━━━━━━
+予約ID : ${entry.id}
+請求額 : ¥${amount.toLocaleString()}
+内容   : ${reason}
+━━━━━━━━━━━━━━━━━━━━
+
+ご不明な点がございましたら、担当（鈴木 / 080-8520-6929）までお問い合わせください。
+
+${EMAIL_HR}
+${EMAIL_COMPANY_FOOTER}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: entry.email,
+      subject: `【88CAMPCAR】保証金からのご請求 — ¥${amount.toLocaleString()}（${reason}）`,
+      text,
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[MAIL] 保証金請求メール送信完了 → ${entry.email}`);
+  } catch (err) { console.error('[MAIL] 保証金請求メールエラー:', err.message); }
+}
+
+// ── 保証金の事後請求（クリーニング・超過・損傷をカードへ） ──
+app.post(['/x1/r/item/:id/charge-deposit'], adminAuth, requireAdminCsrf, async (req, res, next) => {
+  try {
+    if (!stripe) return res.status(503).json({ error: 'Stripe が設定されていません' });
+    const id = req.params.id;
+    const amount = Math.round(Number(req.body?.amount));
+    const reason = sanitize(req.body?.reason);
+    if (!Number.isInteger(amount) || amount <= 0)
+      return res.status(400).json({ error: '金額が不正です' });
+    if (!reason)
+      return res.status(400).json({ error: '請求理由を入力してください' });
+
+    const list = await readReservations();
+    const idx = list.findIndex(r => r.id === id);
+    if (idx === -1) return res.status(404).json({ error: '予約が見つかりません' });
+    const r = list[idx];
+
+    if (!r.stripeCustomerId || !r.stripePaymentMethodId)
+      return res.status(400).json({ error: 'この予約にはカード情報が保存されていません（保証金機能の導入前の予約です）。決済リンクでご請求ください。' });
+
+    const already = (r.depositCharges || []).reduce((s, c) => s + (c.amount || 0), 0);
+    if (already + amount > DEPOSIT_CAP)
+      return res.status(400).json({ error: `保証金の上限（¥${DEPOSIT_CAP.toLocaleString()}）を超えます。請求済み ¥${already.toLocaleString()} / 残り ¥${(DEPOSIT_CAP - already).toLocaleString()}` });
+
+    let pi;
+    try {
+      pi = await stripe.paymentIntents.create({
+        amount, currency: 'jpy',
+        customer: r.stripeCustomerId,
+        payment_method: r.stripePaymentMethodId,
+        off_session: true,
+        confirm: true,
+        metadata: { reservationId: r.id, type: 'deposit', reason },
+      });
+    } catch (e) {
+      console.error('[DEPOSIT] 課金失敗:', e.code || e.type, e.message);
+      return res.status(402).json({ error: `カードへの請求に失敗しました（${e.code || 'エラー'}）。残高不足やカード会社の本人認証要求の可能性があります。お客様に決済リンクを送るなど別の方法でご対応ください。` });
+    }
+
+    if (pi.status !== 'succeeded')
+      return res.status(402).json({ error: `請求が完了しませんでした（状態: ${pi.status}）。別の方法でご対応ください。` });
+
+    r.depositCharges = [...(r.depositCharges || []), {
+      amount, reason, piId: pi.id, at: new Date().toISOString(),
+    }];
+    r.updatedAt = new Date().toISOString();
+    await writeReservations(list);
+    writeAdminAudit(req, 'deposit_charged', { reservationId: r.id, amount, reason, piId: pi.id });
+    sendDepositChargeEmail(r, amount, reason).catch(console.error);
+
+    const totalCharged = already + amount;
+    res.json({ ok: true, amount, totalCharged, remaining: DEPOSIT_CAP - totalCharged });
+  } catch (err) { next(err); }
+});
+
 app.delete(['/api/admin/reservations/:id', '/_/admin/reservations/:id', '/x1/r/item/:id'], adminAuth, requireAdminCsrf, async (req, res, next) => {
   try {
     let list = await readReservations();
