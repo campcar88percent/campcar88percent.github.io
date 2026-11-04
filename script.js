@@ -562,7 +562,13 @@ function initMap() {
     document.addEventListener('click', (e) => { const mapEl = document.getElementById('map'); if (mapEl && !mapEl.contains(e.target)) map.scrollWheelZoom.disable(); });
     map.on('click', () => { map.scrollWheelZoom.enable(); });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+    // 背景タイルは Carto（OSMベース・商用可の無料ベースマップ）を使用
+    // ※OSM公式タイルは商用サイトでの直接利用が規約違反となりブロックされるため
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
+        subdomains: 'abcd',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
 
     const iconUrls = {
         michi: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
