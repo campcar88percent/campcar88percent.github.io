@@ -1086,8 +1086,8 @@ app.use(express.static(path.join(__dirname, '..'), {
   maxAge: '7d',            // 静的ファイルのキャッシュ
   etag: true,
   setHeaders: (res, filePath) => {
-    // HTML は常に最新を取得
-    if (filePath.endsWith('.html')) {
+    // HTML / JS / CSS は常に最新を取得（コード更新を即時反映し、クライアント側の古いキャッシュを防ぐ）
+    if (/\.(html|js|css)$/i.test(filePath)) {
       res.setHeader('Cache-Control', 'no-cache');
     }
   }
