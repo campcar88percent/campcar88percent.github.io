@@ -1069,6 +1069,17 @@ function requireAdminCsrf(req, res, next) {
 // ======================================================
 //  静的ファイル配信
 // ======================================================
+// 機微なファイル/ディレクトリへの直接アクセスを拒否
+// （本番の DATA_DIR が配信ルート配下にあるため、データ・ログ・サーバーコード等の漏えいを防ぐ）
+app.use((req, res, next) => {
+  const p = req.path || '';
+  if (/^\/(storage|server|node_modules|scripts)(\/|$)/i.test(p) ||
+      /\.(json|log|tmp|lock|bak|env)$/i.test(p)) {
+    return res.status(404).send('Not found');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, '..'), {
   dotfiles: 'deny',
   index: 'index.html',
