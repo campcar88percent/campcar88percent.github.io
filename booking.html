@@ -108,12 +108,12 @@
         <li>出発前に車両写真を撮影（4面・傷・燃料計）</li>
         <li>返却後は鍵を戻し、番号をランダムにずらす</li>
       </ul>
-    </div>` : (data.keyBoxRevealDate ? `
+    </div>` : (data.keyBoxNote ? `
     <div class="keybox-card">
       <div class="keybox-label">キーボックス暗証番号</div>
-      <div style="font-size:16px;font-weight:800;color:#f97316;line-height:1.5;">防犯のため、${fmtD(data.keyBoxRevealDate)}（出発前日）に表示されます</div>
+      <div style="font-size:16px;font-weight:800;color:#f97316;line-height:1.5;">${data.keyBoxNote}</div>
       <ul class="keybox-steps">
-        <li>出発前日になると、このページに暗証番号が表示されます</li>
+        <li>ご本人確認（免許証）の確認後、出発前日にこのページへ暗証番号が表示されます</li>
         <li>前日の「出発前日リマインダーメール」にも記載されます</li>
       </ul>
     </div>` : '')}

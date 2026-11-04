@@ -10,6 +10,7 @@ const { Resend } = require('resend');
 const Stripe = require('stripe');
 const helmet = require('helmet');
 const compression = require('compression');
+const multer = require('multer');
 
 // ======================================================
 //  定数
@@ -23,6 +24,8 @@ const MAX_RATE_ENTRIES = 10_000;         // メモリリーク防止
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 管理セッション有効期限（12時間）
 const AUDIT_LOG_MAX_BYTES = 5 * 1024 * 1024; // 監査ログ1ファイル上限(5MB)
 const AUDIT_LOG_KEEP_FILES = 5; // 保持世代数
+const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 免許証アップロード上限 10MB
+const ALLOWED_FILE_TYPES = /jpeg|jpg|png|webp|heic|pdf/i;
 
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -930,6 +933,25 @@ const adminAuditFile = path.join(DATA_DIR, 'admin-audit.log');
 const uploadsDir = path.join(DATA_DIR, 'uploads');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+// 免許証アップロード（multer）
+const _uploadStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    cb(null, `${file.fieldname}_${crypto.randomBytes(8).toString('hex')}${ext}`);
+  }
+});
+const upload = multer({
+  storage: _uploadStorage,
+  limits: { fileSize: FILE_SIZE_LIMIT },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).replace('.', '').toLowerCase();
+    if (ALLOWED_FILE_TYPES.test(ext) || ALLOWED_FILE_TYPES.test(file.mimetype)) cb(null, true);
+    else cb(new Error('許可されていないファイル形式です'));
+  }
+});
+
 let auditWriteQueue = Promise.resolve();
 
 /** 管理操作ログをJSON Lines形式で追記 */
@@ -1163,31 +1185,47 @@ app.get('/api/reservations/dates', async (req, res, next) => {
 // 予約情報を受け取りStripe Checkout Sessionを作成（免許証はご来店時確認）
 app.post('/api/checkout-with-reservation',
   rateLimit(RATE_WINDOW_MS, RATE_MAX_RESERVE),
+  upload.fields([
+    { name: 'license_front', maxCount: 1 },
+    { name: 'license_back',  maxCount: 1 },
+  ]),
   async (req, res, next) => {
+    // バリデーション失敗時にアップロード済みの免許証ファイルを削除
+    const cleanupFiles = () => {
+      for (const k of ['license_front', 'license_back']) {
+        const f = req.files?.[k]?.[0];
+        if (f?.path) fs.promises.unlink(f.path).catch(() => {});
+      }
+    };
+    const bad = (code, error) => { cleanupFiles(); return res.status(code).json({ error }); };
     try {
-      if (!stripe) return res.status(503).json({ error: 'Stripe が設定されていません' });
+      if (!stripe) return bad(503, 'Stripe が設定されていません');
 
       const name  = sanitize(req.body?.name);
       const email = sanitize(req.body?.email);
       const phone = sanitize(req.body?.phone);
       const start = sanitize(req.body?.start);
       const end   = sanitize(req.body?.end);
+      const licenseFront = req.files?.license_front?.[0]?.filename || null;
+      const licenseBack  = req.files?.license_back?.[0]?.filename  || null;
 
       if (!name || !email || !phone || !start || !end)
-        return res.status(400).json({ error: '必須項目が不足しています' });
-      if (req.body?.consent !== true)
-        return res.status(400).json({ error: '貸渡契約書・保証金の内容への同意が必要です' });
+        return bad(400, '必須項目が不足しています');
+      if (req.body?.consent !== 'true' && req.body?.consent !== true)
+        return bad(400, '貸渡契約書・保証金の内容への同意が必要です');
+      if (!licenseFront || !licenseBack)
+        return bad(400, '運転免許証（表・裏）の画像をアップロードしてください');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
+        return bad(400, '有効なメールアドレスを入力してください');
       if (!isValidPhone(phone))
-        return res.status(400).json({ error: '有効な電話番号を入力してください' });
+        return bad(400, '有効な電話番号を入力してください');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end))
-        return res.status(400).json({ error: '日付形式が不正です' });
+        return bad(400, '日付形式が不正です');
       if (new Date(start) >= new Date(end))
-        return res.status(400).json({ error: '終了日は開始日の翌日以降にしてください' });
+        return bad(400, '終了日は開始日の翌日以降にしてください');
       const today = new Date(); today.setHours(0, 0, 0, 0);
       if (new Date(start) < today)
-        return res.status(400).json({ error: '過去の日付は指定できません' });
+        return bad(400, '過去の日付は指定できません');
 
       // ロック内で競合チェック＋仮予約書き込み
       const plan = determinePlan(start, end);
@@ -1209,12 +1247,13 @@ app.post('/api/checkout-with-reservation',
           }
           if (hasConflict(start, end, null, activeList))
             throw Object.assign(new Error('ご指定の日程は既に予約済みです。別の日程をお選びください。'), { status: 409 });
-          const e = { id: generateId(), name, email, phone, start, end, vehicle: 'スーパーロングハイエース', status: 'pending_payment', createdAt: new Date().toISOString(), agreedAt: new Date().toISOString(), agreedTerms: 'yakkan+deposit-v1' };
+          const e = { id: generateId(), name, email, phone, start, end, vehicle: 'スーパーロングハイエース', status: 'pending_payment', createdAt: new Date().toISOString(), agreedAt: new Date().toISOString(), agreedTerms: 'yakkan+deposit-v1', licenseFront, licenseBack };
           list.push(e);
           await writeReservations(list);
           return e;
         });
       } catch (lockErr) {
+        cleanupFiles();
         return res.status(lockErr.status || 500).json({ error: lockErr.message });
       }
 
@@ -1779,16 +1818,24 @@ app.get('/api/booking/:token', async (req, res, next) => {
     if (!r) return res.status(404).json({ error: '予約が見つかりません' });
     const p = determinePlan(r.start, r.end);
     const active = r.status === 'pending' || r.status === 'confirmed';
-    // 暗証番号は防犯のため「出発前日〜返却日」のみ開示する
+    // 暗証番号は防犯＋本人確認のため「確定（免許証確認済み）」かつ「出発前日〜返却日」のみ開示する
+    const confirmed = r.status === 'confirmed';
     const revealFrom = keyBoxRevealDate(r.start);
     const today = todayJST();
-    const keyBoxRevealed = active && today >= revealFrom && today <= r.end;
+    const keyBoxRevealed = confirmed && today >= revealFrom && today <= r.end;
+    let keyBoxNote = null;
+    if (active && !keyBoxRevealed) {
+      if (!confirmed) keyBoxNote = 'ご本人確認（免許証）の確認後、出発前日に表示されます';
+      else if (today < revealFrom) keyBoxNote = `出発前日（${revealFrom.replace(/-/g, '/')}）に表示されます`;
+      else keyBoxNote = '暗証番号の表示期間を過ぎています。担当までお問い合わせください';
+    }
     res.json({
       id: r.id, name: r.name, start: r.start, end: r.end,
       planName: p.name, nights: p.nights, total: p.pricePerDay * p.nights,
       status: r.status, vehicle: r.vehicle,
       keyBox: keyBoxRevealed ? KEY_BOX_CODE : null,
-      keyBoxRevealDate: (active && !keyBoxRevealed && today < revealFrom) ? revealFrom : null,
+      keyBoxNote,
+      hasLicense: !!(r.licenseFront && r.licenseBack),
     });
   } catch (err) { next(err); }
 });
@@ -1804,6 +1851,14 @@ app.use((_req, res) => {
 //  グローバルエラーハンドラ
 // ======================================================
 app.use((err, _req, res, _next) => {
+  // アップロードエラー（multer）
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE')
+      return res.status(413).json({ error: 'ファイルサイズが上限（10MB）を超えています' });
+    return res.status(400).json({ error: `アップロードエラー: ${err.message}` });
+  }
+  if (err && err.message === '許可されていないファイル形式です')
+    return res.status(400).json({ error: err.message });
   // それ以外の予期しないエラー
   console.error('[ERROR]', err.stack || err.message);
   res.status(500).json({ error: 'サーバーエラーが発生しました。しばらくしてからお試しください。' });

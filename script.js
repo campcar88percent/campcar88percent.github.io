@@ -436,20 +436,30 @@ if (reserveForm) {
             return;
         }
 
-        const payload = {
-            name:  reserveForm.querySelector('[name="name"]').value.trim(),
-            email: reserveForm.querySelector('[name="email"]').value.trim(),
-            phone: reserveForm.querySelector('[name="phone"]').value.trim(),
-            start: reserveForm.querySelector('[name="start"]').value,
-            end:   reserveForm.querySelector('[name="end"]').value,
-            consent: true,
-        };
+        const frontFile = reserveForm.querySelector('[name="license_front"]')?.files?.[0];
+        const backFile  = reserveForm.querySelector('[name="license_back"]')?.files?.[0];
+        if (!frontFile || !backFile) {
+            reserveMessage.innerText = '運転免許証（表・裏）の画像をアップロードしてください。';
+            reserveMessage.classList.add('text-red-500');
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'お支払いへ進む';
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('name',  reserveForm.querySelector('[name="name"]').value.trim());
+        fd.append('email', reserveForm.querySelector('[name="email"]').value.trim());
+        fd.append('phone', reserveForm.querySelector('[name="phone"]').value.trim());
+        fd.append('start', reserveForm.querySelector('[name="start"]').value);
+        fd.append('end',   reserveForm.querySelector('[name="end"]').value);
+        fd.append('consent', 'true');
+        fd.append('license_front', frontFile);
+        fd.append('license_back', backFile);
 
         try {
             const res = await fetch('/api/checkout-with-reservation', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: fd
             });
             const data = await res.json();
             if (res.ok && data.url) {
