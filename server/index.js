@@ -1175,6 +1175,8 @@ app.post('/api/checkout-with-reservation',
 
       if (!name || !email || !phone || !start || !end)
         return res.status(400).json({ error: '必須項目が不足しています' });
+      if (req.body?.consent !== true)
+        return res.status(400).json({ error: '貸渡契約書・保証金の内容への同意が必要です' });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
       if (!isValidPhone(phone))
@@ -1207,7 +1209,7 @@ app.post('/api/checkout-with-reservation',
           }
           if (hasConflict(start, end, null, activeList))
             throw Object.assign(new Error('ご指定の日程は既に予約済みです。別の日程をお選びください。'), { status: 409 });
-          const e = { id: generateId(), name, email, phone, start, end, vehicle: 'スーパーロングハイエース', status: 'pending_payment', createdAt: new Date().toISOString() };
+          const e = { id: generateId(), name, email, phone, start, end, vehicle: 'スーパーロングハイエース', status: 'pending_payment', createdAt: new Date().toISOString(), agreedAt: new Date().toISOString(), agreedTerms: 'yakkan+deposit-v1' };
           list.push(e);
           await writeReservations(list);
           return e;

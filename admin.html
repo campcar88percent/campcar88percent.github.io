@@ -793,6 +793,8 @@ function render() {
             <span class="detail-label">車両</span><span class="detail-value">${esc(r.vehicle || '—')}</span>
             <span class="detail-label">受付</span><span class="detail-value">${fmtDT(r.createdAt)}</span>
             ${r.updatedAt ? `<span class="detail-label">更新</span><span class="detail-value">${fmtDT(r.updatedAt)}</span>` : ''}
+            ${r.agreedAt ? `<span class="detail-label">同意</span><span class="detail-value" style="font-size:12px;">${fmtDT(r.agreedAt)}<span style="color:#999;"> / ${esc(r.agreedTerms || '')}</span></span>` : ''}
+            ${(r.depositCharges && r.depositCharges.length) ? `<span class="detail-label">保証金請求</span><span class="detail-value" style="font-size:12px;">${r.depositCharges.map(c => `¥${(c.amount||0).toLocaleString()}（${esc(c.reason||'')}）`).join('<br>')}<br><b>計 ¥${r.depositCharges.reduce((s,c)=>s+(c.amount||0),0).toLocaleString()}</b></span>` : ''}
             <span class="detail-label" style="padding-top:8px;">メモ</span>
             <span class="detail-value" style="padding-top:6px;">
               <textarea class="note-area" id="note-${r.id}" placeholder="内部メモ（お客様には非表示）">${esc(r.note || '')}</textarea>

@@ -427,12 +427,22 @@ if (reserveForm) {
         reserveMessage.innerText = '';
         reserveMessage.className = 'text-sm mt-2 text-center font-bold';
 
+        const consent = document.getElementById('yakkan-agree')?.checked === true;
+        if (!consent) {
+            reserveMessage.innerText = '貸渡契約書・保証金の内容に同意してください。';
+            reserveMessage.classList.add('text-red-500');
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'お支払いへ進む';
+            return;
+        }
+
         const payload = {
             name:  reserveForm.querySelector('[name="name"]').value.trim(),
             email: reserveForm.querySelector('[name="email"]').value.trim(),
             phone: reserveForm.querySelector('[name="phone"]').value.trim(),
             start: reserveForm.querySelector('[name="start"]').value,
             end:   reserveForm.querySelector('[name="end"]').value,
+            consent: true,
         };
 
         try {
