@@ -47,7 +47,6 @@
 <link rel="stylesheet" href="style.css">
 
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
 
 </head>
 
@@ -651,36 +650,264 @@ document.getElementById('calc-reserve-btn').addEventListener('click', () => {
 				<h2 class="text-3xl md:text-6xl font-black text-black uppercase tracking-tighter leading-none">マップ・<br/>周辺施設<span class="text-orange-500">.</span></h2>
 			</div>
 		</div>
-		<p class="text-black/60 text-sm md:text-base leading-relaxed mb-4 md:mb-6 keep-all">車内にバス・トイレはありません。<br/>沖縄には温泉も、シャワーも、道の駅も、ぜんぶある。<br class="md:hidden"/><span class="hidden md:inline">——</span>下の地図で旅のルートをイメージしてみてください。</p>
+			<p class="text-black/60 text-sm md:text-base leading-relaxed mb-6 md:mb-10 keep-all">車内にバス・トイレはありません。沖縄には温泉も、シャワーも、道の駅も、ぜんぶある。<br/>ご旅行の参考に、周辺施設をまとめました。施設名をタップするとGoogleマップが開きます。</p>
 
-		<div class="map-bleed">
-			<div class="bg-white border-2 md:border-4 border-black shadow-none md:shadow-[20px_20px_0px_0px_rgba(0,0,0,0.05)] h-[60vh] md:h-[650px] relative">
-				<div id="map" class="w-full h-full" role="region" aria-label="沖縄本島の施設マップ"></div>
-				<!-- マップ操作ガードオーバーレイ -->
-				<div id="map-touch-guard" class="map-touch-guard">
-					<span class="map-touch-hint">≡ タップしてマップを操作</span>
+			<div id="facility-list">
+			<div class="facility-group" data-cat="michi">
+				<h3 class="text-lg md:text-xl font-black mb-3 flex items-center gap-2"><span>🅿️</span>道の駅<span class="text-black/30 text-sm font-bold">（10）</span></h3>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-8">
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E8%A8%B1%E7%94%B0%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 許田</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%81%8A%E3%81%8A%E3%81%8E%E3%81%BF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 おおぎみ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%81%84%E3%81%A8%E3%81%BE%E3%82%93%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 いとまん</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%81%8B%E3%81%A7%E3%81%AA%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 かでな</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E5%96%9C%E5%90%8D%E7%95%AA%E6%89%80%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 喜名番所</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%81%8E%E3%81%AE%E3%81%96%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 ぎのざ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%82%B5%E3%83%B3%E3%83%A9%E3%82%A4%E3%82%BA%E3%81%B2%E3%81%8C%E3%81%97%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 サンライズひがし</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E8%B1%8A%E5%B4%8E%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 豊崎</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%82%84%E3%82%93%E3%81%B0%E3%82%8B%E3%83%91%E3%82%A4%E3%83%8A%E3%83%83%E3%83%97%E3%83%AB%E3%81%AE%E4%B8%98%20%E5%AE%89%E6%B3%A2%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 やんばるパイナップルの丘 安波</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%20%E3%82%86%E3%81%84%E3%82%86%E3%81%84%E5%9B%BD%E9%A0%AD%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">道の駅 ゆいゆい国頭</span>
+					</a>
 				</div>
 			</div>
-		</div>
+			<div class="facility-group" data-cat="shower">
+				<h3 class="text-lg md:text-xl font-black mb-3 flex items-center gap-2"><span>🚿</span>シャワー・ビーチ<span class="text-black/30 text-sm font-bold">（12）</span></h3>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-8">
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%83%88%E3%83%AD%E3%83%94%E3%82%AB%E3%83%AB%E3%83%93%E3%83%BC%E3%83%81%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">トロピカルビーチ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%A2%E3%83%A9%E3%83%8F%E3%83%93%E3%83%BC%E3%83%81%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">アラハビーチ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%B5%E3%83%B3%E3%82%BB%E3%83%83%E3%83%88%E3%83%93%E3%83%BC%E3%83%81%EF%BC%88%E5%8C%97%E8%B0%B7%EF%BC%89%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">サンセットビーチ（北谷）</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%B3%A2%E3%81%AE%E4%B8%8A%E3%83%93%E3%83%BC%E3%83%81%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">波の上ビーチ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%96%B0%E5%8E%9F%E3%83%93%E3%83%BC%E3%83%81%EF%BC%88%E3%81%BF%E3%83%BC%E3%81%B0%E3%82%8B%EF%BC%89%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">新原ビーチ（みーばる）</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%AE%8B%E6%B3%A2%E3%83%93%E3%83%BC%E3%83%81%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">残波ビーチ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%BF%AB%E6%B4%BBCLUB%20%E5%90%8D%E8%AD%B7%E5%BA%97%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">快活CLUB 名護店</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%90%8D%E8%AD%B7%E5%B8%82%2021%E4%B8%96%E7%B4%80%E3%81%AE%E6%A3%AE%E4%BD%93%E8%82%B2%E9%A4%A8%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">名護市 21世紀の森体育館</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E7%80%AC%E5%BA%95%E3%83%93%E3%83%BC%E3%83%81%EF%BC%88%E6%9C%AC%E9%83%A8%E7%94%BA%EF%BC%89%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">瀬底ビーチ（本部町）</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%83%9F%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3%E3%83%93%E3%83%BC%E3%83%81%EF%BC%88%E6%81%A9%E7%B4%8D%E6%9D%91%EF%BC%89%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">ミッションビーチ（恩納村）</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E5%AE%87%E5%88%A9%E5%B3%B6%E3%81%AE%E9%A7%85%EF%BC%8F%E3%82%BD%E3%83%A9%E3%83%8F%E3%82%B7%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">古宇利島の駅／ソラハシ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%AA%E3%82%AF%E3%83%9E%E3%83%93%E3%83%BC%E3%83%81%EF%BC%88%E5%9B%BD%E9%A0%AD%E6%9D%91%EF%BC%89%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">オクマビーチ（国頭村）</span>
+					</a>
+				</div>
+			</div>
+			<div class="facility-group" data-cat="onsen">
+				<h3 class="text-lg md:text-xl font-black mb-3 flex items-center gap-2"><span>♨️</span>温泉・サウナ<span class="text-black/30 text-sm font-bold">（15）</span></h3>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-8">
+					<a href="https://www.google.com/maps/search/?api=1&query=%E7%90%89%E7%90%83%E6%B8%A9%E6%B3%89%20%E7%80%A8%E9%95%B7%E5%B3%B6%E3%83%9B%E3%83%86%E3%83%AB%20%E9%BE%8D%E7%A5%9E%E3%81%AE%E6%B9%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">琉球温泉 瀨長島ホテル 龍神の湯</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%B9%E3%83%91%E3%82%B8%E3%83%A3%E3%83%B3%E3%82%B0%E3%83%AA%E3%82%A2%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">スパジャングリア</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%B8%E3%83%A5%E3%83%A9%E7%B4%80%E6%B8%A9%E6%B3%89%20%E7%BE%8E%E3%82%89%E6%B5%B7%E3%81%AE%E6%B9%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">ジュラ紀温泉 美ら海の湯</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=TERME%20VILLA%20%E3%81%A1%E3%82%85%E3%82%89%E3%83%BC%E3%82%86%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">TERME VILLA ちゅらーゆ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%A4%A9%E7%84%B6%E6%B8%A9%E6%B3%89%20%E3%81%95%E3%81%97%E3%81%8D%E3%81%AE%E7%8C%BF%E4%BA%BA%E3%81%AE%E6%B9%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">天然温泉 さしきの猿人の湯</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%9A%AE%E3%82%89%E3%81%97%E3%81%AE%E7%99%BA%E9%85%B5%E3%82%B9%E3%83%91%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">暮らしの発酵スパ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%B2%96%E7%B8%84%E3%81%8B%E3%82%8A%E3%82%86%E3%81%97%E3%83%93%E3%83%BC%E3%83%81%E3%83%AA%E3%82%BE%E3%83%BC%E3%83%88%20%E6%A3%AE%E3%81%AE%E6%B9%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">沖縄かりゆしビーチリゾート 森の湯</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%AA%E3%82%AF%E3%83%9E%20%E3%82%B7%E3%83%BC%E3%82%B5%E3%82%A4%E3%83%89%E3%82%B5%E3%82%A6%E3%83%8A%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">オクマ シーサイドサウナ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E4%BA%9C%E7%86%B1%E5%B8%AF%E3%82%B5%E3%82%A6%E3%83%8A%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">亜熱帯サウナ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%BF%E3%83%94%E3%83%83%E3%82%AF%E3%82%BF%E3%83%A9%E3%82%BD%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%BC%E5%AE%9C%E9%87%8E%E5%BA%A7%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">タピックタラソセンター宜野座</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%A8%E3%83%8A%E3%82%B8%E3%83%83%E3%82%AF%20%E5%A4%A9%E7%84%B6%E6%B8%A9%E6%B3%89%E3%82%A2%E3%83%AD%E3%83%9E%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">エナジック 天然温泉アロマ</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E4%BC%8A%E8%A8%88%E5%B3%B6%E6%B8%A9%E6%B3%89%EF%BD%9E%E9%BB%92%E6%BD%AE%E3%81%AE%E6%B9%AF%EF%BD%9E%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">伊計島温泉～黒潮の湯～</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%B3%A2%E4%B9%8B%E4%B8%8A%E3%81%AE%E6%B9%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">波之上の湯</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E4%B8%89%E9%87%8D%E5%9F%8E%E6%B8%A9%E6%B3%89%20%E5%B3%B6%E4%BA%BA%26%E6%B5%B7%E4%BA%BA%E3%81%AE%E6%B9%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">三重城温泉 島人&海人の湯</span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%83%AF%E3%83%B3%E3%83%8E%E3%82%B5%E3%82%A6%E3%83%8A%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">ワンノサウナ</span>
+					</a>
+				</div>
+			</div>
+			<div class="facility-group" data-cat="camp">
+				<h3 class="text-lg md:text-xl font-black mb-3 flex items-center gap-2"><span>⛺</span>キャンプ場<span class="text-black/30 text-sm font-bold">（21）</span></h3>
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-8">
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%A2%E3%83%80%E3%83%B3%E3%83%93%E3%83%BC%E3%83%81%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">アダンビーチ <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%84%E3%82%93%E3%81%B0%E3%82%8B%E5%AD%A6%E3%81%B3%E3%81%AE%E6%A3%AE%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">やんばる学びの森 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%9B%BD%E9%A0%AD%E6%9D%91%E6%A3%AE%E6%9E%97%E5%85%AC%E5%9C%92%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">国頭村森林公園 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%9D%B1%E6%9D%91%E6%9D%91%E6%B0%91%E3%81%AE%E6%A3%AE%20%E3%81%A4%E3%81%A4%E3%81%98%E3%82%A8%E3%82%B3%E3%83%91%E3%83%BC%E3%82%AF%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">東村村民の森 つつじエコパーク <span class="text-black/40 text-[11px]">🚿○ 🔌○</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%8F%88%E5%90%89%E3%82%B3%E3%83%BC%E3%83%92%E3%83%BC%E5%9C%92%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">又吉コーヒー園 <span class="text-black/40 text-[11px]">🚿○ 🔌○</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E7%A6%8F%E5%9C%B0%E5%B7%9D%E6%B5%B7%E6%B5%9C%E5%85%AC%E5%9C%92%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">福地川海浜公園 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%B1%8B%E6%88%91%E5%9C%B0%E3%83%93%E3%83%BC%E3%83%81%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">屋我地ビーチ <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E4%BB%8A%E5%B8%B0%E4%BB%81%E6%B5%B7%E8%BE%BA%E3%81%AE%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E5%A0%B4%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">今帰仁海辺のキャンプ場 <span class="text-black/40 text-[11px]">🚿○ 🔌○</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E5%AE%87%E5%88%A9%E5%B3%B6%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E5%BA%AD%E5%9C%92%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">古宇利島キャンプ庭園 <span class="text-black/40 text-[11px]">🚿○ 🔌○</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E4%BB%8A%E5%B8%B0%E4%BB%81%E7%B7%8F%E5%90%88%E9%81%8B%E5%8B%95%E5%85%AC%E5%9C%92%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">今帰仁総合運動公園 <span class="text-black/40 text-[11px]">🚿○ 🔌○</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%82%AB%E3%83%AB%E3%82%B9%E3%83%88%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E3%82%B5%E3%82%A4%E3%83%88%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">カルストキャンプサイト <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E5%A4%95%E6%97%A5%E3%81%AE%E4%B8%98%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E5%A0%B4%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">夕日の丘キャンプ場 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E7%9C%8C%E6%B0%91%E3%81%AE%E6%A3%AE%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">県民の森 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%B2%96%E7%B8%84%E7%9C%8C%E7%B7%8F%E5%90%88%E9%81%8B%E5%8B%95%E5%85%AC%E5%9C%92%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">沖縄県総合運動公園 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%83%A6%E3%82%A4%E3%83%B3%E3%83%81%E3%83%9B%E3%83%86%E3%83%AB%E5%8D%97%E5%9F%8E%20%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E5%A0%B4%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">ユインチホテル南城 キャンプ場 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%81%8F%E3%82%8B%E3%81%8F%E3%81%BE%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E3%82%B5%E3%82%A4%E3%83%88%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">くるくまキャンプサイト <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=NEOS%E3%82%A2%E3%82%A6%E3%83%88%E3%83%89%E3%82%A2%E3%83%91%E3%83%BC%E3%82%AF%E5%8D%97%E5%9F%8E%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">NEOSアウトドアパーク南城 <span class="text-black/40 text-[11px]">🚿○ 🔌○</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E6%B5%B7%E3%82%93%E9%81%93%EF%BC%88%E3%81%86%E3%81%BF%E3%82%93%E3%81%A1%EF%BC%89%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">海ん道（うみんち） <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E3%81%84%E3%81%B8%E3%82%84%E6%84%9B%E3%83%A9%E3%83%B3%E3%83%89%E3%82%88%E3%81%AD%E3%81%96%E3%81%8D%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">いへや愛ランドよねざき <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E4%BC%8A%E6%B1%9F%E6%9D%91%E9%9D%92%E5%B0%91%E5%B9%B4%E6%97%85%E8%A1%8C%E6%9D%91%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">伊江村青少年旅行村 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+					<a href="https://www.google.com/maps/search/?api=1&query=%E7%B2%9F%E5%9B%BD%E5%B3%B6%E3%82%AA%E3%83%BC%E3%83%88%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%97%E5%A0%B4%20%E6%B2%96%E7%B8%84" target="_blank" rel="noopener" class="group flex items-center gap-2 border border-black/10 rounded-lg px-3 py-2.5 hover:border-orange-500 hover:bg-orange-50 transition-colors">
+						<svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+						<span class="text-xs md:text-sm font-bold leading-tight">粟国島オートキャンプ場 <span class="text-black/40 text-[11px]">🚿○ 🔌×</span></span>
+					</a>
+				</div>
+			</div>
+			</div>
 
-		<!-- Map controls (outside the map frame, centered) -->
-		<div class="map-controls map-controls-outside mx-auto flex flex-wrap justify-center items-center gap-2 md:gap-3 mt-2 md:mt-4" role="group" aria-label="マップフィルタ">
-			<button id="filter-michi" type="button" class="px-3 py-2 bg-black text-white font-bold map-legend-button text-xs md:text-sm" aria-pressed="false" aria-label="道の駅を表示" tabindex="0">
-				<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png" alt="青いピン" class="inline-icon" />道の駅
-			</button>
-			<button id="filter-shower" type="button" class="px-3 py-2 bg-black text-white font-bold map-legend-button text-xs md:text-sm" aria-pressed="false" aria-label="シャワーを表示" tabindex="0">
-				<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png" alt="緑のピン" class="inline-icon" />シャワー
-			</button>
-			<button id="filter-onsen" type="button" class="px-3 py-2 bg-black text-white font-bold map-legend-button text-xs md:text-sm" aria-pressed="false" aria-label="温泉を表示" tabindex="0">
-				<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png" alt="赤いピン" class="inline-icon" />温泉・サウナ
-			</button>
-			<button id="filter-camp" type="button" class="px-3 py-2 bg-black text-white font-bold map-legend-button text-xs md:text-sm" aria-pressed="false" aria-label="キャンプ場を表示" tabindex="0">
-				<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png" alt="オレンジのピン" class="inline-icon" />キャンプ場
-			</button>
-			<button id="filter-all" type="button" class="px-3 py-2 bg-black text-white font-bold text-xs md:text-sm filter-active" aria-label="すべて表示" aria-pressed="true" tabindex="0">全て表示</button>
-		</div>
-
-		<p class="map-note mt-2 md:mt-3 text-xs md:text-sm text-black/60">＊詳細は事前に各HPへご確認ください。<br/>🚿 シャワー / 🔌 電源（○=可 △=要相談 ×=不可）</p>
+			<p class="mt-4 md:mt-6 text-xs md:text-sm text-black/60">＊詳細・営業時間・料金は各施設のHP等で事前にご確認ください。<br/>🚿 シャワー / 🔌 電源（○=可 △=要相談 ×=不可）</p>
 	</div>
 </section>
 
@@ -972,7 +1199,6 @@ document.getElementById('calc-reserve-btn').addEventListener('click', () => {
 </footer>
 
 <!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
 <script type="module" src="script.js?v=20261104"></script>
 
 <!-- 予約モーダル -->
