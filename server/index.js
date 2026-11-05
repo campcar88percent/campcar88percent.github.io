@@ -251,6 +251,12 @@ const reservationCleanupTimer = setInterval(async () => {
       !(r.status === 'pending_payment' && new Date(r.createdAt).getTime() < oneHourAgo)
     );
     await writeReservations(remaining);
+    // 未決済で破棄する予約の免許証画像も削除（個人情報を残さない）
+    for (const r of expired) {
+      for (const f of [r.licenseFront, r.licenseBack]) {
+        if (f) { try { await fs.promises.unlink(path.join(uploadsDir, f)); } catch {} }
+      }
+    }
     console.log(`[CLEANUP] pending_payment ${expired.length}件を自動削除しました`);
   } catch (err) {
     console.error('[CLEANUP] 自動削除エラー:', err.message);
