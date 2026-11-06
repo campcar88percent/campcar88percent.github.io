@@ -285,9 +285,16 @@ maybeSendReturnReminders();
 const returnReminderTimer = setInterval(maybeSendReturnReminders, 60 * 60 * 1000);
 returnReminderTimer.unref();
 
-// バックアップ：24時間ごと（初回はサーバー起動完了後に実行）
+// 未確定（本人確認前）で出発が近い予約を管理者へ警告：1時間ごと（1日1回/件）
+maybeAlertUnconfirmed();
+const unconfirmedAlertTimer = setInterval(maybeAlertUnconfirmed, 60 * 60 * 1000);
+unconfirmedAlertTimer.unref();
+
+// バックアップ：24時間ごと ＋ 起動30秒後に初回実行
+// （無料プランは頻繁に再起動しタイマーが走らないため、再起動のたびに1回は退避する）
 const backupTimer = setInterval(backupReservations, 24 * 60 * 60 * 1000);
 backupTimer.unref();
+setTimeout(backupReservations, 30 * 1000).unref();
 
 // Renderスリープ対策：14分ごとに自己ping
 if (KEEP_ALIVE_URL) {
@@ -642,6 +649,15 @@ async function sendDepartureReminder(entry) {
   if (!resend) return;
   const plan = determinePlan(entry.start, entry.end);
   const total = plan.pricePerDay * plan.nights;
+  // 本人確認（免許証）が済み「確定」済みのときのみ暗証番号を記載する
+  const confirmed = entry.status === 'confirmed';
+  const bookingUrl = `${BASE_URL}/booking.html?token=${entry.viewToken}`;
+  const pinCheck = confirmed
+    ? `□ キーボックス暗証番号を確認しましたか？→ ${KEY_BOX_CODE}`
+    : `□ キーボックス暗証番号は本人確認の完了後に下記ページでお知らせします\n  予約確認ページ：${bookingUrl}`;
+  const pinStep = confirmed
+    ? `キーボックス（暗証番号：${KEY_BOX_CODE}）から鍵を取り出してご乗車`
+    : `キーボックス（暗証番号は本人確認後に予約確認ページで表示）から鍵を取り出してご乗車`;
   const text = `${entry.name}様
 
 明日 ${entry.start} のご出発まであと1日です。
@@ -653,17 +669,19 @@ async function sendDepartureReminder(entry) {
 料金   : ¥${total.toLocaleString()}（決済済み）
 車両   : ${entry.vehicle}
 ━━━━━━━━━━━━━━━━━━━━
-
+${confirmed ? '' : `
+※ 現在ご本人確認（免許証）の確認中です。確認完了後、予約確認ページに暗証番号が表示されます。
+`}
 【出発前チェックリスト】
 □ 運転免許証をお持ちですか？
-□ キーボックス暗証番号を確認しましたか？→ ${KEY_BOX_CODE}
+${pinCheck}
 □ 車両写真（出発前・返却前）を撮影する準備はできていますか？
 
 ${EMAIL_LOCATION}
 
 【当日の手順（再掲）】
 1. 駐車場にて車両を確認
-2. キーボックス（暗証番号：${KEY_BOX_CODE}）から鍵を取り出してご乗車
+2. ${pinStep}
 3. 出発前に車両4面・傷・燃料計を撮影
 4. 返却時も同様に撮影 → 鍵をキーボックスに戻して施錠
 
@@ -719,6 +737,75 @@ async function maybeSendDepartureReminders() {
     console.log(`[REMINDER] 出発リマインダー送信: ${sent.length}件`);
   } catch (err) {
     console.error('[REMINDER] エラー:', err.message);
+  }
+}
+
+/** 未確定（決済済みだが未確定＝本人確認前）で出発が近い予約を管理者へ警告するメール */
+async function sendUnconfirmedAdminAlert(entry, daysUntil) {
+  if (!resend || !ADMIN_EMAIL) return;
+  const mailBaseUrl = getMailBaseUrl();
+  const when = daysUntil <= 0 ? '本日' : `あと${daysUntil}日`;
+  const html = `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:600px;margin:0 auto;border:2px solid #dc2626;border-radius:8px;overflow:hidden;">
+      <div style="background:#dc2626;color:#fff;padding:20px 24px;">
+        <h1 style="margin:0;font-size:18px;letter-spacing:.03em;">⚠ 未確定の予約があります（${when}出発）</h1>
+      </div>
+      <div style="padding:24px;font-size:14px;line-height:1.8;">
+        <p style="margin:0 0 16px;"><b>${entry.name}</b> 様の予約が<b>未確定</b>のままです。<br>
+        出発（<b>${entry.start}</b>）までに免許証で本人確認し、管理画面で「確定」してください。<br>
+        <span style="color:#dc2626;font-weight:700;">確定しないとお客様に暗証番号が表示されず、当日鍵を受け取れません。</span></p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:6px 0;color:#888;width:90px;">予約ID</td><td style="padding:6px 0;font-weight:700;">${entry.id}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">期間</td><td style="padding:6px 0;font-weight:700;">${entry.start} 〜 ${entry.end}</td></tr>
+          <tr><td style="padding:6px 0;color:#888;">電話</td><td style="padding:6px 0;"><a href="tel:${entry.phone}">${entry.phone}</a></td></tr>
+        </table>
+        <div style="margin-top:20px;text-align:center;">
+          <a href="${mailBaseUrl}/admin.html" style="display:inline-block;background:#dc2626;color:#fff;padding:12px 28px;text-decoration:none;font-size:13px;font-weight:700;border-radius:6px;">管理画面を開いて確定する →</a>
+        </div>
+      </div>
+    </div>`;
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: ADMIN_EMAIL,
+      subject: `⚠【要確定・${when}出発】${entry.name}様 ${entry.start}〜 本人確認待ち`,
+      html
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[ALERT] 未確定アラート送信 → ${ADMIN_EMAIL}（${entry.id}）`);
+  } catch (err) {
+    console.error('[ALERT] 未確定アラートエラー:', err.message);
+  }
+}
+
+/** 未確定で出発が2日以内の予約を管理者へ1日1回警告（1時間ごとに実行） */
+async function maybeAlertUnconfirmed() {
+  if (!resend || !ADMIN_EMAIL) return;
+  try {
+    const nowJST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    const todayStr = jstDateStr(nowJST);
+    // 本日〜2日後に出発する日付の集合
+    const windowDates = new Map();
+    for (let i = 0; i <= 2; i++) {
+      const d = new Date(nowJST); d.setDate(d.getDate() + i);
+      windowDates.set(jstDateStr(d), i);
+    }
+    const list = await readReservations();
+    const targets = list.filter(r =>
+      r.status === 'pending' &&        // 決済済みだが未確定
+      windowDates.has(r.start) &&
+      r.lastUnconfirmedAlert !== todayStr
+    );
+    if (!targets.length) return;
+    for (const r of targets) {
+      await sendUnconfirmedAdminAlert(r, windowDates.get(r.start));
+    }
+    const ids = new Set(targets.map(r => r.id));
+    for (const r of list) { if (ids.has(r.id)) r.lastUnconfirmedAlert = todayStr; }
+    await writeReservations(list);
+    console.log(`[ALERT] 未確定アラート送信: ${targets.length}件`);
+  } catch (err) {
+    console.error('[ALERT] 未確定アラートエラー:', err.message);
   }
 }
 
@@ -1032,8 +1119,36 @@ async function backupReservations() {
       await fs.promises.unlink(path.join(DATA_DIR, f)).catch(() => {});
       console.log(`[BACKUP] 古いバックアップ削除: ${f}`);
     }
+    // ディスク消失（Render再デプロイ等）に備え、バックアップをメールでディスク外にも退避
+    await emailBackup(today);
   } catch (err) {
     console.error('[BACKUP] バックアップエラー:', err.message);
+  }
+}
+
+/** 予約・ブロック日程のJSONを管理者メールに添付して送信（オフサイト退避） */
+async function emailBackup(dateStr) {
+  if (!resend || !ADMIN_EMAIL) return;
+  const attachments = [];
+  for (const file of [reservationsFile, blocksFile]) {
+    try {
+      const content = await fs.promises.readFile(file);
+      attachments.push({ filename: path.basename(file), content });
+    } catch { /* ファイルが無ければスキップ */ }
+  }
+  if (!attachments.length) return;
+  try {
+    const { error } = await resend.emails.send({
+      from: `88CAMPCAR <${MAIL_FROM}>`,
+      to: ADMIN_EMAIL,
+      subject: `【バックアップ】予約データ ${dateStr}`,
+      text: `88CAMPCAR 予約データの自動バックアップです（${dateStr}）。\nサーバー障害・再デプロイでデータが消えた場合、この添付ファイルを storage/ に戻すと復元できます。`,
+      attachments
+    });
+    if (error) throw new Error(error.message);
+    console.log(`[BACKUP] メール退避完了 → ${ADMIN_EMAIL}（${attachments.length}ファイル）`);
+  } catch (err) {
+    console.error('[BACKUP] メール退避エラー:', err.message);
   }
 }
 
