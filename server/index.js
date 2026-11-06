@@ -494,7 +494,7 @@ function getMailBaseUrl() {
  * @param {Object} entry - 予約データ
  */
 async function sendReservationEmail(entry) {
-  if (!resend) return;
+  if (!resend) return false;
   const plan = determinePlan(entry.start, entry.end);
   const total = plan.pricePerDay * plan.nights;
   const mailBaseUrl = getMailBaseUrl();
@@ -513,7 +513,7 @@ async function sendReservationEmail(entry) {
           <tr><td style="padding:8px 0;color:#888;">期間</td><td style="padding:8px 0;font-weight:700;">${entry.start} → ${entry.end}（${plan.nights}泊）</td></tr>
           <tr><td style="padding:8px 0;color:#888;">料金</td><td style="padding:8px 0;font-weight:700;font-size:18px;">¥${total.toLocaleString()}<span style="font-size:12px;color:#888;"> (¥${plan.pricePerDay.toLocaleString()}/日)</span></td></tr>
           <tr><td style="padding:8px 0;color:#888;">車両</td><td style="padding:8px 0;">${entry.vehicle}</td></tr>
-          <tr><td style="padding:8px 0;color:#888;">免許証</td><td style="padding:8px 0;">${entry.licenseFront ? '表面 ✓' : '—'} / ${entry.licenseBack ? '裏面 ✓' : '—'}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">免許証</td><td style="padding:8px 0;">このメールに添付しています（表／裏）。<br><span style="font-size:11px;color:#c026d3;">本人確認のうえ印刷・保管してください。サーバー上の画像は送信後に自動削除されます。</span></td></tr>
           <tr><td style="padding:8px 0;color:#888;">受付日時</td><td style="padding:8px 0;">${new Date(entry.createdAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</td></tr>
         </table>
         <div style="margin-top:20px;text-align:center;">
@@ -526,17 +526,36 @@ async function sendReservationEmail(entry) {
     </div>
   `;
 
+  // 免許証画像をこの通知メールに添付（サーバーには残さず、本人確認はメールで行う）
+  const attachments = [];
+  for (const { file, label } of [
+    { file: entry.licenseFront, label: 'front' },
+    { file: entry.licenseBack,  label: 'back'  },
+  ]) {
+    if (!file) continue;
+    try {
+      const content = await fs.promises.readFile(path.join(uploadsDir, file));
+      const ext = (path.extname(file) || '.jpg').toLowerCase();
+      attachments.push({ filename: `license_${label}_${entry.id}${ext}`, content });
+    } catch (e) {
+      console.error('[MAIL] 免許証添付の読み込み失敗:', e.message);
+    }
+  }
+
   try {
     const { error } = await resend.emails.send({
       from: `88CAMPCAR <${MAIL_FROM}>`,
       to: ADMIN_EMAIL,
       subject: `【新規予約】${entry.name}様 ${entry.start}〜${entry.end}（${plan.name}）`,
-      html
+      html,
+      ...(attachments.length ? { attachments } : {})
     });
     if (error) throw new Error(error.message);
-    console.log(`[MAIL] 予約通知メール送信完了 → ${ADMIN_EMAIL}`);
+    console.log(`[MAIL] 予約通知メール送信完了 → ${ADMIN_EMAIL}（免許証添付 ${attachments.length} 件）`);
+    return true;
   } catch (err) {
     console.error('[MAIL] メール送信エラー:', err.message);
+    return false;
   }
 }
 
@@ -1318,10 +1337,35 @@ app.get('/api/confirm-payment', async (req, res, next) => {
     list[idx].updatedAt = new Date().toISOString();
     await writeReservations(list);
 
+    const _licFiles = [list[idx].licenseFront, list[idx].licenseBack].filter(Boolean);
     Promise.allSettled([
       sendReservationEmail(list[idx]),
       sendReservationAutoReply(list[idx])
-    ]).catch(err => console.error('[MAIL] err:', err.message));
+    ]).then(async ([adminRes]) => {
+      // 管理者メール（免許証添付）が確実に送信できた場合のみ、サーバーから免許証を削除
+      // 送信に失敗した場合はディスクに残し、管理画面のサムネイルから確認できる状態を保つ
+      const sent = adminRes.status === 'fulfilled' && adminRes.value === true;
+      if (!sent || _licFiles.length === 0) {
+        if (!sent) console.error('[LICENSE] 通知メール未送信のため免許証をサーバーに保持（管理画面で確認可）');
+        return;
+      }
+      for (const f of _licFiles) {
+        try { await fs.promises.unlink(path.join(uploadsDir, f)); } catch {}
+      }
+      try {
+        await withReservationLock(async () => {
+          const l2 = await readReservations();
+          const i2 = l2.findIndex(r => r.id === reservationId);
+          if (i2 === -1) return;
+          delete l2[i2].licenseFront;
+          delete l2[i2].licenseBack;
+          l2[i2].licenseHandling = 'emailed-and-deleted';
+          l2[i2].licenseDeletedAt = new Date().toISOString();
+          await writeReservations(l2);
+        });
+        console.log(`[LICENSE] 免許証をメール送付後にサーバーから削除: ${reservationId}`);
+      } catch (e) { console.error('[LICENSE] 参照クリア失敗:', e.message); }
+    }).catch(err => console.error('[MAIL] err:', err.message));
 
     res.json({ ok: true, name: list[idx].name });
   } catch (err) {

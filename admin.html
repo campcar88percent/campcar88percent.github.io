@@ -806,7 +806,12 @@ function render() {
             <div class="license-thumbs">
               ${r.licenseFront ? `<img class="license-thumb" src="${licenseUrl(r.licenseFront)}" alt="表" onclick="openLB('${licenseUrl(r.licenseFront)}')" />` : ''}
               ${r.licenseBack  ? `<img class="license-thumb" src="${licenseUrl(r.licenseBack)}"  alt="裏" onclick="openLB('${licenseUrl(r.licenseBack)}')"  />` : ''}
-            </div>` : ''}
+            </div>
+            <div style="font-size:11px;color:#dc2626;font-weight:700;margin-bottom:12px;">⚠ メール未送信のためサーバーに保持中（本人確認後、確定時に自動削除）</div>`
+          : (r.licenseHandling === 'emailed-and-deleted' ? `
+            <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:4px;">免許証</div>
+            <div style="font-size:11px;color:#059669;font-weight:700;margin-bottom:12px;">✓ 通知メールに添付済み・サーバーからは削除済み${r.licenseDeletedAt ? `（${new Date(r.licenseDeletedAt).toLocaleString('ja-JP')}）` : ''}</div>`
+          : '')}
           <div class="action-bar">
             ${r.status !== 'confirmed' ? `<button class="action-btn btn-confirm" onclick="act('${r.id}','confirmed')">✓ 確定</button>` : ''}
             ${r.status !== 'cancelled' ? `<button class="action-btn btn-cancel"  onclick="showCancelModal('${r.id}')">✗ キャンセル</button>` : ''}
