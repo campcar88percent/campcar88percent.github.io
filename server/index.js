@@ -126,6 +126,9 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://js.stripe.com"],
+      // インラインの onclick 等のイベントハンドラを許可（helmet既定の script-src-attr 'none' を上書き）
+      // これが無いと admin.html の onclick ボタン（カレンダー・確定・キャンセル等）が全て無効化される
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:"],
