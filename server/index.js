@@ -286,9 +286,10 @@ const returnReminderTimer = setInterval(maybeSendReturnReminders, 60 * 60 * 1000
 returnReminderTimer.unref();
 
 // 未確定（本人確認前）で出発が近い予約を管理者へ警告：1時間ごと（1日1回/件）
-maybeAlertUnconfirmed();
+// 初回は起動10秒後に実行（モジュール読み込み完了後＝resend等の初期化後に動かすため）
 const unconfirmedAlertTimer = setInterval(maybeAlertUnconfirmed, 60 * 60 * 1000);
 unconfirmedAlertTimer.unref();
+setTimeout(maybeAlertUnconfirmed, 10 * 1000).unref();
 
 // バックアップ：24時間ごと ＋ 起動30秒後に初回実行
 // （無料プランは頻繁に再起動しタイマーが走らないため、再起動のたびに1回は退避する）
